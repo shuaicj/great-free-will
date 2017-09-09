@@ -1,4 +1,4 @@
-server.port: 8080
+proxy.port: 8080
 
 logging.config: classpath:config/logback.xml
 
@@ -6,5 +6,5 @@ logging.config: classpath:config/logback.xml
 
 spring.profiles: prod
 
-logging.file: /opt/ygomi/roadDB/log/great-free-will.log
+logging.file: great-free-will.log
 

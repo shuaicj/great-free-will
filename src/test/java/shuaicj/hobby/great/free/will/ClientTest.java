@@ -3,11 +3,15 @@ package shuaicj.hobby.great.free.will;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.apache.http.client.fluent.Request;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import shuaicj.hobby.great.free.will.http.HttpProxyServer;
 
 /**
  * Mock a http client and test.
@@ -19,8 +23,21 @@ import org.springframework.test.context.junit4.SpringRunner;
 @Slf4j
 public class ClientTest {
 
-    @Value("${server.port}")
+    @Value("${proxy.port}")
     int port;
+
+    @Autowired
+    HttpProxyServer proxyServer;
+
+    @Before
+    public void before() throws Exception {
+        proxyServer.start();
+    }
+
+    @After
+    public void after() throws Exception {
+        proxyServer.stop();
+    }
 
     @Test
     public void request() throws Exception {
