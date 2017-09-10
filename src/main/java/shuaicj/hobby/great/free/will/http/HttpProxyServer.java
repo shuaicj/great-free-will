@@ -22,6 +22,7 @@ public class HttpProxyServer {
     private final int port;
     private ExecutorService pool;
     private ServerSocket serverSocket;
+    private long taskCount;
     private boolean started;
 
     public HttpProxyServer(@Value("${proxy.port}") int port) {
@@ -38,9 +39,9 @@ public class HttpProxyServer {
                     try {
                         Socket socket = serverSocket.accept();
                         socket.setKeepAlive(true);
-                        pool.submit(new HttpProxyServerTask(socket));
+                        pool.submit(new HttpProxyServerTask("task-" + taskCount++, socket));
                     } catch (IOException e) {
-                        logger.error("Unhandled exception occurs!", e);
+                        logger.error("shit happens", e);
                     }
                 }
             });
