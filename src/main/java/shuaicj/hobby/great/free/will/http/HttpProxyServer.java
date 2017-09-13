@@ -36,13 +36,13 @@ public class HttpProxyServer {
             logger.info("HttpProxyServer started on port: {}", port);
             pool.submit(() -> {
                 while (true) {
-                    try {
+                    // try {
                         Socket socket = serverSocket.accept();
-                        socket.setKeepAlive(true);
+                        // socket.setKeepAlive(true);
                         pool.submit(new HttpProxyServerTask("task-" + taskCount++, socket));
-                    } catch (IOException e) {
-                        logger.error("shit happens", e);
-                    }
+                    // } catch (IOException e) {
+                    //     logger.error("shit happens", e);
+                    // }
                 }
             });
             started = true;

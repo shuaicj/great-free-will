@@ -41,11 +41,13 @@ public class ClientTest {
 
     @Test
     public void request() throws Exception {
-        // logger.info(Request.Get("https://github.com")
-        logger.info(Request.Get("http://www.baidu.com")
-                .viaProxy(new HttpHost("127.0.0.1", port))
-                .execute().returnResponse().toString());
-                // .returnContent()
-                // .asString());
+        logger.info("check this: {}",
+                // Request.Get("https://github.com")
+                Request.Get("http://www.baidu.com")
+                // Request.Get("http://127.0.0.1:8080/hello")
+                        .viaProxy(new HttpHost("127.0.0.1", port))
+                        .execute()
+                        // .returnResponse());
+                        .returnContent());
     }
 }

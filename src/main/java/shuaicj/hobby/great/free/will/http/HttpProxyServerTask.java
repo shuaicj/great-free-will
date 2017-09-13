@@ -27,19 +27,27 @@ public class HttpProxyServerTask implements Runnable {
     public void run() {
         Socket targetSocket = null;
         try {
-            InputStream clientInput = socket.getInputStream();
-            HttpProxyTarget target = HttpProxyTarget.parse(clientInput);
+            final InputStream clientInput = new BufferedInputStream(socket.getInputStream());
+            HttpProxyTarget target = HttpProxyTarget.parseFrom(clientInput);
             targetSocket = new Socket(target.getHost(), target.getPort());
 
             OutputStream targetOutput = targetSocket.getOutputStream();
-            String consumed = target.getConsumedLines();
-            logger.info(id + " request\n" + consumed);
-            targetOutput.write(consumed.getBytes());
-            pipeFlush(clientInput,targetOutput);
+            byte[] consumed = target.getConsumedBytes();
+            logger.info(id + " {}\n{}", target, new String(consumed));
+            targetOutput.write(consumed);
+
+
+            // byte[] buf = new byte[4096];
+            // int len;
+            // while ((len = clientInput.read(buf)) != -1) {
+            //     targetOutput.write(buf, 0, len);
+            // }
+
+            new Thread(() -> pipe(clientInput, targetOutput)).start();
 
             InputStream targetInput = targetSocket.getInputStream();
             OutputStream clientOutput = socket.getOutputStream();
-            pipeFlush(targetInput, clientOutput);
+            pipe(targetInput, clientOutput);
         } catch (IOException e) {
             logger.error(id + " shit happens", e);
         } finally {
@@ -54,12 +62,16 @@ public class HttpProxyServerTask implements Runnable {
         }
     }
 
-    private void pipeFlush(InputStream in, OutputStream out) throws IOException {
+    private void pipe(InputStream in, OutputStream out) {
         byte[] buf = new byte[4096];
         int len;
-        while ((len = in.read(buf)) != -1) {
-            out.write(buf, 0, len);
+        try {
+            while ((len = in.read(buf)) != -1) {
+                out.write(buf, 0, len);
+            }
+            out.flush();
+        } catch (IOException e) {
+            logger.error(id + " shit happens", e);
         }
-        out.flush();
     }
 }
