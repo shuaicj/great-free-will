@@ -1,10 +1,25 @@
-proxy.port: 9090
+proxy.port: 8080
 
 logging.config: classpath:config/logback.xml
 
 ---
 
-spring.profiles: prod
+spring.profiles: all
 
 logging.file: great-free-will.log
 
+---
+
+spring.profiles: http
+
+proxy.port: 80
+
+logging.file: great-free-will-http.log
+
+---
+
+spring.profiles: https
+
+proxy.port: 443
+
+logging.file: great-free-will-https.log

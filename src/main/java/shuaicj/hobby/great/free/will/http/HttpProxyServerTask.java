@@ -28,26 +28,27 @@ public class HttpProxyServerTask implements Runnable {
 
     @Override
     public void run() {
-        // Socket targetSocket = null;
-        try (final InputStream clientInput = new BufferedInputStream(socket.getInputStream())) {
+        try (final InputStream clientInput = new BufferedInputStream(socket.getInputStream());
+             final OutputStream clientOutput = socket.getOutputStream()) {
+
             HttpProxyClientHeader header = HttpProxyClientHeader.parseFrom(clientInput);
+
             try (final Socket targetSocket = new Socket(header.getHost(), header.getPort())) {
 
                 final OutputStream targetOutput = targetSocket.getOutputStream();
+                final InputStream targetInput = targetSocket.getInputStream();
+
                 logger.info(id + " {}\n{}", header, new String(header.getBytes()));
 
                 if (header.isHttps()) { // if https, respond 200 to create tunnel, and do not forward header
-                    targetOutput.write("HTTP/1.1 200 Connection Established\r\n\r\n".getBytes());
-                    targetOutput.flush();
+                    clientOutput.write("HTTP/1.1 200 Connection Established\r\n\r\n".getBytes());
+                    clientOutput.flush();
                 } else { // if http, forward header
                     targetOutput.write(header.getBytes());
                 }
+
                 Future<?> future = pool.submit(() -> pipe(clientInput, targetOutput));
-
-                InputStream targetInput = targetSocket.getInputStream();
-                OutputStream clientOutput = socket.getOutputStream();
                 pipe(targetInput, clientOutput);
-
                 future.get();
             }
         } catch (IOException | InterruptedException | ExecutionException e) {
