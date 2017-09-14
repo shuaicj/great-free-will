@@ -28,39 +28,30 @@ public class HttpProxyServerTask implements Runnable {
 
     @Override
     public void run() {
-        Socket targetSocket = null;
-        try {
-            final InputStream clientInput = new BufferedInputStream(socket.getInputStream());
+        // Socket targetSocket = null;
+        try (final InputStream clientInput = new BufferedInputStream(socket.getInputStream())) {
             HttpProxyClientHeader header = HttpProxyClientHeader.parseFrom(clientInput);
-            targetSocket = new Socket(header.getHost(), header.getPort());
+            try (final Socket targetSocket = new Socket(header.getHost(), header.getPort())) {
 
-            OutputStream targetOutput = targetSocket.getOutputStream();
-            logger.info(id + " {}\n{}", header, new String(header.getBytes()));
+                final OutputStream targetOutput = targetSocket.getOutputStream();
+                logger.info(id + " {}\n{}", header, new String(header.getBytes()));
 
-            if (header.isHttps()) { // if https, respond 200 to create tunnel, and do not forward header
-                targetOutput.write("HTTP/1.1 200 Connection Established\r\n\r\n".getBytes());
-                targetOutput.flush();
-            } else { // if http, forward header
-                targetOutput.write(header.getBytes());
+                if (header.isHttps()) { // if https, respond 200 to create tunnel, and do not forward header
+                    targetOutput.write("HTTP/1.1 200 Connection Established\r\n\r\n".getBytes());
+                    targetOutput.flush();
+                } else { // if http, forward header
+                    targetOutput.write(header.getBytes());
+                }
+                Future<?> future = pool.submit(() -> pipe(clientInput, targetOutput));
+
+                InputStream targetInput = targetSocket.getInputStream();
+                OutputStream clientOutput = socket.getOutputStream();
+                pipe(targetInput, clientOutput);
+
+                future.get();
             }
-            Future<?> future = pool.submit(() -> pipe(clientInput, targetOutput));
-
-            InputStream targetInput = targetSocket.getInputStream();
-            OutputStream clientOutput = socket.getOutputStream();
-            pipe(targetInput, clientOutput);
-
-            future.get();
         } catch (IOException | InterruptedException | ExecutionException e) {
             logger.error(id + " shit happens", e);
-        } finally {
-            try {
-                socket.close();
-                if (targetSocket != null) {
-                    targetSocket.close();
-                }
-            } catch (IOException e) {
-                logger.error(id + " shit happens", e);
-            }
         }
     }
 
