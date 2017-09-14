@@ -1,14 +1,15 @@
 package shuaicj.hobby.great.free.will.http;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import javax.annotation.PostConstruct;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * A simple http proxy server.
@@ -20,40 +21,29 @@ import java.util.concurrent.Executors;
 public class HttpProxyServer {
 
     private final int port;
-    private ExecutorService pool;
+    private final ExecutorService pool;
     private ServerSocket serverSocket;
     private long taskCount;
-    private boolean started;
 
-    public HttpProxyServer(@Value("${proxy.port}") int port) {
+    public HttpProxyServer(@Value("${proxy.port}") int port, @Autowired ExecutorService pool) {
         this.port = port;
+        this.pool = pool;
     }
 
-    public synchronized void start() throws IOException {
-        if (!started) {
-            pool = Executors.newCachedThreadPool();
-            serverSocket = new ServerSocket(port);
-            logger.info("HttpProxyServer started on port: {}", port);
-            pool.submit(() -> {
-                while (true) {
-                    // try {
-                        Socket socket = serverSocket.accept();
-                        // socket.setKeepAlive(true);
-                        pool.submit(new HttpProxyServerTask("task-" + taskCount++, socket));
-                    // } catch (IOException e) {
-                    //     logger.error("shit happens", e);
-                    // }
+    @PostConstruct
+    @SuppressWarnings("InfiniteLoopStatement")
+    public void start() throws IOException {
+        serverSocket = new ServerSocket(port);
+        logger.info("HttpProxyServer started on port: {}", port);
+        pool.submit(() -> {
+            while (true) {
+                try {
+                    Socket socket = serverSocket.accept();
+                    pool.submit(new HttpProxyServerTask("task-" + taskCount++, socket, pool));
+                } catch (IOException e) {
+                    logger.error("shit happens", e);
                 }
-            });
-            started = true;
-        }
-    }
-
-    public synchronized void stop() throws IOException {
-        if (started) {
-            pool.shutdownNow();
-            serverSocket.close();
-            started = false;
-        }
+            }
+        });
     }
 }

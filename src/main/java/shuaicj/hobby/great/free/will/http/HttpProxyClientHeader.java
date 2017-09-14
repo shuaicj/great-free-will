@@ -4,29 +4,40 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import lombok.Getter;
 import lombok.ToString;
 
 /**
- * The target host.
+ * The http header of client.
  *
  * @author shuaicj 2017/09/10
  */
-@ToString(of = {"host", "port"})
-public class HttpProxyTarget {
+@ToString(of = {"method", "host", "port", "https"})
+public class HttpProxyClientHeader {
 
-    private String host;
-    private int port;
+    @Getter private String method;
+    @Getter private String host;
+    @Getter private int port;
+    @Getter private boolean https;
+    @Getter private byte[] bytes;
 
     private final InputStream in;
     private final ByteArrayOutputStream consumedBytes;
 
-    private HttpProxyTarget(InputStream in) {
+    private HttpProxyClientHeader(InputStream in) {
         this.in = in;
         this.consumedBytes = new ByteArrayOutputStream();
     }
 
+    public static HttpProxyClientHeader parseFrom(InputStream in) throws IOException {
+        HttpProxyClientHeader target = new HttpProxyClientHeader(in);
+        target.init();
+        return target;
+    }
+
     private void init() throws IOException {
-        String firstLine = readLine();
+        method = readLine().split(" ")[0]; // the first word is http method name
+        https = method.equalsIgnoreCase("CONNECT"); // method CONNECT means https
         for (String line = readLine(); line != null && !line.isEmpty(); line = readLine()) {
             if (line.startsWith("Host: ")) {
                 String[] arr = line.split(":");
@@ -34,7 +45,7 @@ public class HttpProxyTarget {
                 try {
                     if (arr.length == 3) {
                         port = Integer.parseInt(arr[2]);
-                    } else if (firstLine.startsWith("CONNECT ")) {
+                    } else if (https) {
                         port = 443; // https
                     } else {
                         port = 80; // http
@@ -42,12 +53,12 @@ public class HttpProxyTarget {
                 } catch (NumberFormatException e) {
                     throw new IOException(e);
                 }
-                break;
             }
         }
         if (host == null || port == 0) {
             throw new IOException("cannot find header \'Host\'");
         }
+        bytes = consumedBytes.toByteArray();
     }
 
     private String readLine() throws IOException {
@@ -62,23 +73,5 @@ public class HttpProxyTarget {
             }
         }
         return builder.length() == 0 ? null : builder.toString();
-    }
-
-    public static HttpProxyTarget parseFrom(InputStream in) throws IOException {
-        HttpProxyTarget target = new HttpProxyTarget(in);
-        target.init();
-        return target;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public byte[] getConsumedBytes() {
-        return consumedBytes.toByteArray();
     }
 }

@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * The http proxy server task.
@@ -13,14 +16,14 @@ import java.net.Socket;
 @Slf4j
 public class HttpProxyServerTask implements Runnable {
 
-    // static final String ERROR = "HTTP/1.1 500 Connection FAILED\r\n\r\n";
-
     private final String id;
     private final Socket socket;
+    private final ExecutorService pool;
 
-    public HttpProxyServerTask(String id, Socket socket) {
+    public HttpProxyServerTask(String id, Socket socket, ExecutorService pool) {
         this.id = id;
         this.socket = socket;
+        this.pool = pool;
     }
 
     @Override
@@ -28,27 +31,26 @@ public class HttpProxyServerTask implements Runnable {
         Socket targetSocket = null;
         try {
             final InputStream clientInput = new BufferedInputStream(socket.getInputStream());
-            HttpProxyTarget target = HttpProxyTarget.parseFrom(clientInput);
-            targetSocket = new Socket(target.getHost(), target.getPort());
+            HttpProxyClientHeader header = HttpProxyClientHeader.parseFrom(clientInput);
+            targetSocket = new Socket(header.getHost(), header.getPort());
 
             OutputStream targetOutput = targetSocket.getOutputStream();
-            byte[] consumed = target.getConsumedBytes();
-            logger.info(id + " {}\n{}", target, new String(consumed));
-            targetOutput.write(consumed);
+            logger.info(id + " {}\n{}", header, new String(header.getBytes()));
 
-
-            // byte[] buf = new byte[4096];
-            // int len;
-            // while ((len = clientInput.read(buf)) != -1) {
-            //     targetOutput.write(buf, 0, len);
-            // }
-
-            new Thread(() -> pipe(clientInput, targetOutput)).start();
+            if (header.isHttps()) { // if https, respond 200 to create tunnel, and do not forward header
+                targetOutput.write("HTTP/1.1 200 Connection Established\r\n\r\n".getBytes());
+                targetOutput.flush();
+            } else { // if http, forward header
+                targetOutput.write(header.getBytes());
+            }
+            Future<?> future = pool.submit(() -> pipe(clientInput, targetOutput));
 
             InputStream targetInput = targetSocket.getInputStream();
             OutputStream clientOutput = socket.getOutputStream();
             pipe(targetInput, clientOutput);
-        } catch (IOException e) {
+
+            future.get();
+        } catch (IOException | InterruptedException | ExecutionException e) {
             logger.error(id + " shit happens", e);
         } finally {
             try {

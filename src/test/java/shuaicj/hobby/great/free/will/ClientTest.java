@@ -26,19 +26,6 @@ public class ClientTest {
     @Value("${proxy.port}")
     int port;
 
-    @Autowired
-    HttpProxyServer proxyServer;
-
-    @Before
-    public void before() throws Exception {
-        proxyServer.start();
-    }
-
-    @After
-    public void after() throws Exception {
-        proxyServer.stop();
-    }
-
     @Test
     public void request() throws Exception {
         logger.info("check this: {}",
