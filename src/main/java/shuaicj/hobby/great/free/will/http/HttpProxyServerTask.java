@@ -38,7 +38,7 @@ public class HttpProxyServerTask implements Runnable {
                 final OutputStream targetOutput = targetSocket.getOutputStream();
                 final InputStream targetInput = targetSocket.getInputStream();
 
-                logger.info(id + " {}\n{}", header, new String(header.getBytes()));
+                logger.info(id + " {}", header);
 
                 if (header.isHttps()) { // if https, respond 200 to create tunnel, and do not forward header
                     clientOutput.write("HTTP/1.1 200 Connection Established\r\n\r\n".getBytes());
