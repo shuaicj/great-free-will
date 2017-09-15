@@ -1,9 +1,0 @@
-CONNECT github.com:443 HTTP/1.1
-Host: github.com
-User-Agent: Apache-HttpClient/4.5.3 (Java/1.8.0_121)
-
-GET http://www.baidu.com/ HTTP/1.1
-Host: www.baidu.com
-Proxy-Connection: Keep-Alive
-User-Agent: Apache-HttpClient/4.5.3 (Java/1.8.0_121)
-Accept-Encoding: gzip,deflate
