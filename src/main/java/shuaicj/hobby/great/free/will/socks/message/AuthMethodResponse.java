@@ -1,5 +1,12 @@
 package shuaicj.hobby.great.free.will.socks.message;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.EncoderException;
+import lombok.Builder;
+import lombok.Getter;
+import shuaicj.hobby.great.free.will.socks.SocksEncoder;
+import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
+
 /**
  * SOCKS5 authentication method selection response.
  *
@@ -13,5 +20,29 @@ package shuaicj.hobby.great.free.will.socks.message;
  *
  * @author shuaicj 2017/09/26
  */
+@Getter
 public class AuthMethodResponse {
+
+    private final short ver;
+    private final AuthMethod method;
+
+    @Builder
+    private AuthMethodResponse(int ver, AuthMethod method) {
+        this.ver = (short) ver;
+        this.method = method;
+    }
+
+    /**
+     * Encoder of AuthMethodResponse.
+     *
+     * @author shuaicj 2017/09/27
+     */
+    public static class Encoder implements SocksEncoder<AuthMethodResponse> {
+
+        @Override
+        public void encode(AuthMethodResponse msg, ByteBuf out) throws EncoderException {
+            out.writeByte(msg.ver());
+            out.writeByte(msg.method().value());
+        }
+    }
 }

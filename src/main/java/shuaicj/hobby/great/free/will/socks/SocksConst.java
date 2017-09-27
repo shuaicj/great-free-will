@@ -7,9 +7,6 @@ package shuaicj.hobby.great.free.will.socks;
  *
  * @author shuaicj 2017/09/26
  */
-public final class Const {
-    public static final short VER_SIZE = 1;
-    public static final short VER_VALUE = 0x05;
-
-    public static final short NMETHODS_SIZE = 1;
+public final class SocksConst {
+    public static final short VERSION = 0x05;
 }

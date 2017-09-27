@@ -1,11 +1,19 @@
 package shuaicj.hobby.great.free.will.socks.message;
 
-import static shuaicj.hobby.great.free.will.socks.Const.NMETHODS_SIZE;
-import static shuaicj.hobby.great.free.will.socks.Const.VER_SIZE;
-import static shuaicj.hobby.great.free.will.socks.Const.VER_VALUE;
+import static shuaicj.hobby.great.free.will.socks.SocksConst.VERSION;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
+import lombok.Builder;
 import lombok.Getter;
+import shuaicj.hobby.great.free.will.socks.SocksDecoder;
+import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
 
 /**
  * SOCKS5 authentication method selection request.
@@ -23,33 +31,56 @@ import lombok.Getter;
 @Getter
 public class AuthMethodRequest {
 
-    private short ver;
-    private short nmethods;
-    private short[] methods;
+    public static final short VER_SIZE = 1;
+    public static final short NMETHODS_SIZE = 1;
 
-    public static AuthMethodRequest parse(ByteBuf buf) {
-        if (buf.readableBytes() < VER_SIZE + NMETHODS_SIZE) {
-            return null;
+    private final short ver;
+    private final short nmethods;
+    private final Set<AuthMethod> methods;
+
+    @Builder
+    private AuthMethodRequest(int ver, int nmethods, Set<AuthMethod> methods) {
+        this.ver = (short) ver;
+        this.nmethods = (short) nmethods;
+        this.methods = Collections.unmodifiableSet(methods);
+    }
+
+    /**
+     * Decoder of AuthMethodRequest.
+     *
+     * @author shuaicj 2017/09/27
+     */
+    public static class Decoder implements SocksDecoder<AuthMethodRequest> {
+
+        @Override
+        public AuthMethodRequest decode(ByteBuf in) throws DecoderException {
+            if (in.readableBytes() < VER_SIZE + NMETHODS_SIZE) {
+                return null;
+            }
+
+            in.markReaderIndex();
+
+            short ver = in.readUnsignedByte();
+            if (ver != VERSION) {
+                throw new DecoderException("unsupported ver: " + ver);
+            }
+
+            short nmethods = in.readUnsignedByte();
+            if (in.readableBytes() < nmethods) {
+                in.resetReaderIndex();
+                return null;
+            }
+
+            List<AuthMethod> methods = new ArrayList<>();
+            for (int i = 0; i < nmethods; i++) {
+                short method = in.readUnsignedByte();
+                methods.add(AuthMethod.valueOf(method));
+            }
+
+            return AuthMethodRequest.builder()
+                    .nmethods(nmethods)
+                    .methods(EnumSet.copyOf(methods))
+                    .build();
         }
-
-        buf.markReaderIndex();
-
-        short ver = buf.readUnsignedByte();
-        if (ver != VER_VALUE) {
-            buf.resetReaderIndex();
-            throw new IllegalArgumentException("illegal ver: " + ver);
-        }
-
-        short nmethods = buf.readUnsignedByte();
-        if (buf.readableBytes() < nmethods) {
-            buf.resetReaderIndex();
-            return null;
-        }
-
-        for (int i = 0; i < nmethods; i++) {
-            short method = buf.readUnsignedByte();
-        }
-
-        return null;
     }
 }
