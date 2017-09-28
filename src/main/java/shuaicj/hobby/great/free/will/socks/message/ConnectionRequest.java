@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksDecoder;
 import shuaicj.hobby.great.free.will.socks.SocksMessage;
-import shuaicj.hobby.great.free.will.socks.type.ConnectionAddr;
+import shuaicj.hobby.great.free.will.socks.message.part.ConnectionAddr;
 import shuaicj.hobby.great.free.will.socks.type.ConnectionCmd;
 
 /**

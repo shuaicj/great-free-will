@@ -1,4 +1,4 @@
-package shuaicj.hobby.great.free.will.socks.type;
+package shuaicj.hobby.great.free.will.socks.message.part;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksDecoder;
 import shuaicj.hobby.great.free.will.socks.SocksEncoder;
+import shuaicj.hobby.great.free.will.socks.type.ConnectionAddrType;
 
 /**
  /**
