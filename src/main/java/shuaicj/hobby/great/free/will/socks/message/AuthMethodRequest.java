@@ -31,8 +31,8 @@ import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
 @Getter
 public class AuthMethodRequest {
 
-    public static final short VER_SIZE = 1;
-    public static final short NMETHODS_SIZE = 1;
+    public static final int VER_SIZE = 1;
+    public static final int NMETHODS_SIZE = 1;
 
     private final short ver;
     private final short nmethods;
@@ -46,7 +46,7 @@ public class AuthMethodRequest {
     }
 
     /**
-     * Decoder of AuthMethodRequest.
+     * Decoder of {@link AuthMethodRequest}.
      *
      * @author shuaicj 2017/09/27
      */
@@ -54,7 +54,7 @@ public class AuthMethodRequest {
 
         @Override
         public AuthMethodRequest decode(ByteBuf in) throws DecoderException {
-            if (in.readableBytes() < VER_SIZE + NMETHODS_SIZE) {
+            if (!in.isReadable(VER_SIZE + NMETHODS_SIZE)) {
                 return null;
             }
 
@@ -66,7 +66,7 @@ public class AuthMethodRequest {
             }
 
             short nmethods = in.readUnsignedByte();
-            if (in.readableBytes() < nmethods) {
+            if (!in.isReadable(nmethods)) {
                 in.resetReaderIndex();
                 return null;
             }

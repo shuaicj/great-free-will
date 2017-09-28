@@ -33,7 +33,7 @@ public class AuthMethodResponse {
     }
 
     /**
-     * Encoder of AuthMethodResponse.
+     * Encoder of {@link AuthMethodResponse}.
      *
      * @author shuaicj 2017/09/27
      */
@@ -41,8 +41,8 @@ public class AuthMethodResponse {
 
         @Override
         public void encode(AuthMethodResponse msg, ByteBuf out) throws EncoderException {
-            out.writeByte(msg.ver());
-            out.writeByte(msg.method().value());
+            out.writeByte(msg.ver);
+            out.writeByte(msg.method.value());
         }
     }
 }

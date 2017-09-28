@@ -12,8 +12,9 @@ public interface SocksDecoder<T> {
 
     /**
      * @param in where data read from
-     * @return socks message, or null if need more data
-     * @throws DecoderException if error occurs
+     * @return a socks message and readerIndex of 'in' is moved backwards after read;
+     *         or null if need more data, and readerIndex must keep unchanged.
+     * @throws DecoderException if error occurs, the state of readerIndex is not guaranteed
      */
     T decode(ByteBuf in) throws DecoderException;
 }

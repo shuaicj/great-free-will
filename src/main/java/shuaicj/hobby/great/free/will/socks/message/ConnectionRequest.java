@@ -1,5 +1,15 @@
 package shuaicj.hobby.great.free.will.socks.message;
 
+import static shuaicj.hobby.great.free.will.socks.SocksConst.VERSION;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
+import lombok.Builder;
+import lombok.Getter;
+import shuaicj.hobby.great.free.will.socks.SocksDecoder;
+import shuaicj.hobby.great.free.will.socks.type.ConnectionAddr;
+import shuaicj.hobby.great.free.will.socks.type.ConnectionCmd;
+
 /**
  * SOCKS5 connection request.
  *
@@ -13,5 +23,61 @@ package shuaicj.hobby.great.free.will.socks.message;
  *
  * @author shuaicj 2017/09/26
  */
+@Getter
 public class ConnectionRequest {
+
+    public static final int VER_SIZE = 1;
+    public static final int CMD_SIZE = 1;
+    public static final int RSV_SIZE = 1;
+
+    private final short ver;
+    private final ConnectionCmd cmd;
+    private final short rsv;
+    private final ConnectionAddr dst;
+
+    @Builder
+    private ConnectionRequest(short ver, ConnectionCmd cmd, short rsv, ConnectionAddr dst) {
+        this.ver = ver;
+        this.cmd = cmd;
+        this.rsv = rsv;
+        this.dst = dst;
+    }
+
+    /**
+     * Decoder of {@link ConnectionRequest}.
+     *
+     * @author shuaicj 2017/09/27
+     */
+    public static class Decoder implements SocksDecoder<ConnectionRequest> {
+
+        @Override
+        public ConnectionRequest decode(ByteBuf in) throws DecoderException {
+            if (!in.isReadable(VER_SIZE + CMD_SIZE + RSV_SIZE)) {
+                return null;
+            }
+
+            in.markReaderIndex();
+
+            short ver = in.readUnsignedByte();
+            if (ver != VERSION) {
+                throw new DecoderException("unsupported ver: " + ver);
+            }
+
+            ConnectionCmd cmd = ConnectionCmd.valueOf(in.readUnsignedByte());
+            short rsv = in.readUnsignedByte();
+
+            ConnectionAddr dst = new ConnectionAddr.Decoder().decode(in);
+            if (dst == null) {
+                in.resetReaderIndex();
+                return null;
+            }
+
+            return ConnectionRequest.builder()
+                    .ver(ver)
+                    .cmd(cmd)
+                    .rsv(rsv)
+                    .dst(dst)
+                    .build();
+        }
+    }
 }
