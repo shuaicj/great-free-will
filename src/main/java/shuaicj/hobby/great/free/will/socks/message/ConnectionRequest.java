@@ -6,7 +6,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksDecoder;
+import shuaicj.hobby.great.free.will.socks.SocksMessage;
 import shuaicj.hobby.great.free.will.socks.type.ConnectionAddr;
 import shuaicj.hobby.great.free.will.socks.type.ConnectionCmd;
 
@@ -24,7 +27,7 @@ import shuaicj.hobby.great.free.will.socks.type.ConnectionCmd;
  * @author shuaicj 2017/09/26
  */
 @Getter
-public class ConnectionRequest {
+public class ConnectionRequest implements SocksMessage {
 
     public static final int VER_SIZE = 1;
     public static final int CMD_SIZE = 1;
@@ -48,7 +51,10 @@ public class ConnectionRequest {
      *
      * @author shuaicj 2017/09/27
      */
+    @Component
     public static class Decoder implements SocksDecoder<ConnectionRequest> {
+
+        @Autowired ConnectionAddr.Decoder addrDecoder;
 
         @Override
         public ConnectionRequest decode(ByteBuf in) throws DecoderException {
@@ -66,7 +72,7 @@ public class ConnectionRequest {
             ConnectionCmd cmd = ConnectionCmd.valueOf(in.readUnsignedByte());
             short rsv = in.readUnsignedByte();
 
-            ConnectionAddr dst = new ConnectionAddr.Decoder().decode(in);
+            ConnectionAddr dst = addrDecoder.decode(in);
             if (dst == null) {
                 in.resetReaderIndex();
                 return null;

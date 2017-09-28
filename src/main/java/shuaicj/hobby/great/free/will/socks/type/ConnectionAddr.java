@@ -5,6 +5,7 @@ import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksDecoder;
 import shuaicj.hobby.great.free.will.socks.SocksEncoder;
 
@@ -62,6 +63,7 @@ public class ConnectionAddr {
      *
      * @author shuaicj 2017/09/28
      */
+    @Component
     public static class Decoder implements SocksDecoder<ConnectionAddr> {
 
         @Override
@@ -124,6 +126,7 @@ public class ConnectionAddr {
      *
      * @author shuaicj 2017/09/28
      */
+    @Component
     public static class Encoder implements SocksEncoder<ConnectionAddr> {
 
         @Override

@@ -4,7 +4,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.EncoderException;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksEncoder;
+import shuaicj.hobby.great.free.will.socks.SocksMessage;
 import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
 
 /**
@@ -21,7 +23,7 @@ import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
  * @author shuaicj 2017/09/26
  */
 @Getter
-public class AuthMethodResponse {
+public class AuthMethodResponse implements SocksMessage {
 
     private final short ver;
     private final AuthMethod method;
@@ -37,6 +39,7 @@ public class AuthMethodResponse {
      *
      * @author shuaicj 2017/09/27
      */
+    @Component
     public static class Encoder implements SocksEncoder<AuthMethodResponse> {
 
         @Override

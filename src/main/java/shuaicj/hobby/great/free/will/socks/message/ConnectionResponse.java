@@ -4,7 +4,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.EncoderException;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksEncoder;
+import shuaicj.hobby.great.free.will.socks.SocksMessage;
 import shuaicj.hobby.great.free.will.socks.type.ConnectionAddr;
 import shuaicj.hobby.great.free.will.socks.type.ConnectionRep;
 
@@ -22,7 +25,7 @@ import shuaicj.hobby.great.free.will.socks.type.ConnectionRep;
  * @author shuaicj 2017/09/26
  */
 @Getter
-public class ConnectionResponse {
+public class ConnectionResponse implements SocksMessage {
 
     private final short ver;
     private final ConnectionRep rep;
@@ -42,13 +45,16 @@ public class ConnectionResponse {
      *
      * @author shuaicj 2017/09/27
      */
+    @Component
     public static class Encoder implements SocksEncoder<ConnectionResponse> {
+
+        @Autowired ConnectionAddr.Encoder addrEncoder;
 
         @Override
         public void encode(ConnectionResponse msg, ByteBuf out) throws EncoderException {
             out.writeByte(msg.ver);
             out.writeByte(msg.rep.value());
-            new ConnectionAddr.Encoder().encode(msg.bnd, out);
+            addrEncoder.encode(msg.bnd, out);
         }
     }
 }
