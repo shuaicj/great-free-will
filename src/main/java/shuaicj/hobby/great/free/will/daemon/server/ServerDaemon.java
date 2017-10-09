@@ -32,7 +32,7 @@ public class ServerDaemon {
     @PostConstruct
     public void start() {
         new Thread(() -> {
-            logger.info("ClientDaemon started on port: {}", port);
+            logger.info("ServerDaemon started on port: {}", port);
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             try {

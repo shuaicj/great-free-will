@@ -12,6 +12,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksDecoder;
 import shuaicj.hobby.great.free.will.socks.SocksMessage;
@@ -31,6 +32,7 @@ import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
  * @author shuaicj 2017/09/26
  */
 @Getter
+@ToString
 public class AuthMethodRequest implements SocksMessage {
 
     public static final int VER_SIZE = 1;

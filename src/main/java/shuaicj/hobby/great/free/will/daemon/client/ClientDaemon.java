@@ -46,7 +46,8 @@ public class ClientDaemon {
                                 ch.pipeline().addLast(
                                         appCtx.getBean(LoggingHandler.class),
                                         appCtx.getBean(ClientDaemonDecoder.class),
-                                        appCtx.getBean(ClientDaemonEncoder.class)
+                                        appCtx.getBean(ClientDaemonEncoder.class),
+                                        appCtx.getBean(ClientDaemonHandler.class)
                                 );
                             }
                         })

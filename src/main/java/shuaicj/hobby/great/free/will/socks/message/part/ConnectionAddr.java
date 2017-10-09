@@ -5,6 +5,7 @@ import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksDecoder;
 import shuaicj.hobby.great.free.will.socks.SocksEncoder;
@@ -40,6 +41,7 @@ import shuaicj.hobby.great.free.will.socks.type.ConnectionAddrType;
  * @author shuaicj 2017/09/28
  */
 @Getter
+@ToString
 public class ConnectionAddr {
 
     public static final int TYPE_SIZE = 1;
