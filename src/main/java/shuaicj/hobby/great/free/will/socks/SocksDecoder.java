@@ -8,7 +8,7 @@ import io.netty.handler.codec.DecoderException;
  *
  * @author shuaicj 2017/09/27
  */
-public interface SocksDecoder<T> {
+public interface SocksDecoder<T extends SocksMessage> {
 
     /**
      * @param in where data read from

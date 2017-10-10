@@ -56,6 +56,7 @@ public class ConnectionResponse implements SocksMessage {
         public void encode(ConnectionResponse msg, ByteBuf out) throws EncoderException {
             out.writeByte(msg.ver);
             out.writeByte(msg.rep.value());
+            out.writeByte(msg.rsv);
             addrEncoder.encode(msg.bnd, out);
         }
     }

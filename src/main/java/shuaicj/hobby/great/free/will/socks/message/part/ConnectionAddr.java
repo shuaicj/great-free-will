@@ -9,6 +9,7 @@ import lombok.ToString;
 import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksDecoder;
 import shuaicj.hobby.great.free.will.socks.SocksEncoder;
+import shuaicj.hobby.great.free.will.socks.SocksMessage;
 import shuaicj.hobby.great.free.will.socks.type.ConnectionAddrType;
 
 /**
@@ -42,7 +43,7 @@ import shuaicj.hobby.great.free.will.socks.type.ConnectionAddrType;
  */
 @Getter
 @ToString
-public class ConnectionAddr {
+public class ConnectionAddr implements SocksMessage {
 
     public static final int TYPE_SIZE = 1;
     public static final int IP_V4_SIZE = 4;

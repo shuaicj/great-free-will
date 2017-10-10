@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksMessage;
 import shuaicj.hobby.great.free.will.socks.message.AuthMethodResponse;
 import shuaicj.hobby.great.free.will.socks.message.ConnectionResponse;
+import shuaicj.hobby.great.free.will.socks.message.DataTransport;
 
 /**
  * Netty encoder of client daemon.
@@ -25,6 +26,7 @@ public class ClientDaemonEncoder extends MessageToByteEncoder<SocksMessage> {
 
     @Autowired private AuthMethodResponse.Encoder authMethodResponseEncoder;
     @Autowired private ConnectionResponse.Encoder connectionResponseEncoder;
+    @Autowired private DataTransport.Encoder dataTransportEncoder;
 
     @Override
     protected void encode(ChannelHandlerContext ctx, SocksMessage msg, ByteBuf out) throws Exception {
@@ -35,6 +37,9 @@ public class ClientDaemonEncoder extends MessageToByteEncoder<SocksMessage> {
         if (msg instanceof ConnectionResponse) {
             connectionResponseEncoder.encode((ConnectionResponse) msg, out);
             return;
+        }
+        if (msg instanceof DataTransport) {
+            dataTransportEncoder.encode((DataTransport) msg, out);
         }
     }
 }

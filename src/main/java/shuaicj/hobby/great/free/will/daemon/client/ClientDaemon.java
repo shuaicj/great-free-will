@@ -4,6 +4,7 @@ import javax.annotation.PostConstruct;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -47,10 +48,12 @@ public class ClientDaemon {
                                         appCtx.getBean(LoggingHandler.class),
                                         appCtx.getBean(ClientDaemonDecoder.class),
                                         appCtx.getBean(ClientDaemonEncoder.class),
-                                        appCtx.getBean(ClientDaemonHandler.class)
+                                        appCtx.getBean(ClientDaemonNativeHandler.class)
                                 );
                             }
                         })
+                        .option(ChannelOption.SO_BACKLOG, 128)
+                        .childOption(ChannelOption.SO_KEEPALIVE, true)
                         .bind(port).sync().channel().closeFuture().sync();
             } catch (InterruptedException e) {
                 logger.error("shit happens", e);

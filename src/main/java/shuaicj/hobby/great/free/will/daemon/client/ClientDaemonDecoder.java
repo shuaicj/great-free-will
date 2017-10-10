@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.socks.SocksState;
 import shuaicj.hobby.great.free.will.socks.message.AuthMethodRequest;
 import shuaicj.hobby.great.free.will.socks.message.ConnectionRequest;
+import shuaicj.hobby.great.free.will.socks.message.DataTransport;
 
 /**
  * Netty decoder of client daemon.
@@ -29,6 +30,7 @@ public class ClientDaemonDecoder extends ByteToMessageDecoder {
 
     @Autowired private AuthMethodRequest.Decoder authMethodRequestDecoder;
     @Autowired private ConnectionRequest.Decoder connectionRequestDecoder;
+    @Autowired private DataTransport.Decoder dataTransportDecoder;
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
@@ -52,8 +54,11 @@ public class ClientDaemonDecoder extends ByteToMessageDecoder {
                 break;
             }
             case CONNECTION_OK: {
-                logger.info("Data transport...");
-                out.add(in.readBytes(in.readableBytes()));
+                DataTransport data = dataTransportDecoder.decode(in);
+                if (data != null) {
+                    logger.info("Data transport...");
+                    out.add(data);
+                }
                 break;
             }
         }

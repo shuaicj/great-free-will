@@ -8,7 +8,7 @@ import io.netty.handler.codec.EncoderException;
  *
  * @author shuaicj 2017/09/27
  */
-public interface SocksEncoder<T> {
+public interface SocksEncoder<T extends SocksMessage> {
 
     /**
      * @param msg socks message
