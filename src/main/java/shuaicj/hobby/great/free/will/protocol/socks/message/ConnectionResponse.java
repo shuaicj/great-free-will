@@ -1,4 +1,4 @@
-package shuaicj.hobby.great.free.will.socks.message;
+package shuaicj.hobby.great.free.will.protocol.socks.message;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.EncoderException;
@@ -7,10 +7,10 @@ import lombok.Getter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksEncoder;
-import shuaicj.hobby.great.free.will.socks.SocksMessage;
-import shuaicj.hobby.great.free.will.socks.message.part.ConnectionAddr;
-import shuaicj.hobby.great.free.will.socks.type.ConnectionRep;
+import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
+import shuaicj.hobby.great.free.will.protocol.Message;
+import shuaicj.hobby.great.free.will.protocol.socks.message.part.ConnectionAddr;
+import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionRep;
 
 /**
  * SOCKS5 connection response.
@@ -27,7 +27,11 @@ import shuaicj.hobby.great.free.will.socks.type.ConnectionRep;
  */
 @Getter
 @ToString
-public class ConnectionResponse implements SocksMessage {
+public class ConnectionResponse implements Message {
+
+    public static final int VER_LEN = 1;
+    public static final int REP_LEN = 1;
+    public static final int RSV_LEN = 1;
 
     private final short ver;
     private final ConnectionRep rep;
@@ -42,13 +46,18 @@ public class ConnectionResponse implements SocksMessage {
         this.bnd = bnd;
     }
 
+    @Override
+    public int length() {
+        return VER_LEN + REP_LEN + RSV_LEN + bnd.length();
+    }
+
     /**
      * Encoder of {@link ConnectionResponse}.
      *
      * @author shuaicj 2017/09/27
      */
     @Component
-    public static class Encoder implements SocksEncoder<ConnectionResponse> {
+    public static class Encoder implements MessageEncoder<ConnectionResponse> {
 
         @Autowired ConnectionAddr.Encoder addrEncoder;
 

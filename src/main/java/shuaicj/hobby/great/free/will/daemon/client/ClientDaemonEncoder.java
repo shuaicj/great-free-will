@@ -8,10 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksMessage;
-import shuaicj.hobby.great.free.will.socks.message.AuthMethodResponse;
-import shuaicj.hobby.great.free.will.socks.message.ConnectionResponse;
-import shuaicj.hobby.great.free.will.socks.message.DataTransport;
+import shuaicj.hobby.great.free.will.protocol.Message;
+import shuaicj.hobby.great.free.will.protocol.socks.message.AuthMethodResponse;
+import shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionResponse;
+import shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport;
 
 /**
  * Netty encoder of client daemon.
@@ -22,14 +22,14 @@ import shuaicj.hobby.great.free.will.socks.message.DataTransport;
 @Scope("prototype")
 @Profile("client")
 @Slf4j
-public class ClientDaemonEncoder extends MessageToByteEncoder<SocksMessage> {
+public class ClientDaemonEncoder extends MessageToByteEncoder<Message> {
 
     @Autowired private AuthMethodResponse.Encoder authMethodResponseEncoder;
     @Autowired private ConnectionResponse.Encoder connectionResponseEncoder;
     @Autowired private DataTransport.Encoder dataTransportEncoder;
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, SocksMessage msg, ByteBuf out) throws Exception {
+    protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
         if (msg instanceof AuthMethodResponse) {
             authMethodResponseEncoder.encode((AuthMethodResponse) msg, out);
             return;

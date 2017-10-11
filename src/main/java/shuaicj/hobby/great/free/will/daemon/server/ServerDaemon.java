@@ -47,7 +47,8 @@ public class ServerDaemon {
                                 ch.pipeline().addLast(
                                         appCtx.getBean(LoggingHandler.class),
                                         appCtx.getBean(ServerDaemonDecoder.class),
-                                        appCtx.getBean(ServerDaemonEncoder.class)
+                                        appCtx.getBean(ServerDaemonEncoder.class),
+                                        appCtx.getBean(ServerDaemonTunnelHandler.class)
                                 );
                             }
                         })

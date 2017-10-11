@@ -1,4 +1,4 @@
-package shuaicj.hobby.great.free.will.socks.message.part;
+package shuaicj.hobby.great.free.will.protocol.socks.message.part;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
@@ -7,16 +7,16 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksDecoder;
-import shuaicj.hobby.great.free.will.socks.SocksEncoder;
-import shuaicj.hobby.great.free.will.socks.SocksMessage;
-import shuaicj.hobby.great.free.will.socks.type.ConnectionAddrType;
+import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
+import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
+import shuaicj.hobby.great.free.will.protocol.Message;
+import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionAddrType;
 
 /**
  /**
  * SOCKS5 connection address. It's usually part of SOCKS messages,
- * eg. {@link shuaicj.hobby.great.free.will.socks.message.ConnectionRequest}
- * and {@link shuaicj.hobby.great.free.will.socks.message.ConnectionResponse}
+ * eg. {@link shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionRequest}
+ * and {@link shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionResponse}
  *
  *   +------+----------+----------+
  *   | ATYP |   ADDR   |   PORT   |
@@ -43,13 +43,13 @@ import shuaicj.hobby.great.free.will.socks.type.ConnectionAddrType;
  */
 @Getter
 @ToString
-public class ConnectionAddr implements SocksMessage {
+public class ConnectionAddr implements Message {
 
-    public static final int TYPE_SIZE = 1;
-    public static final int IP_V4_SIZE = 4;
-    public static final int IP_V6_SIZE = 16;
-    public static final int DOMAIN_LEN_SIZE = 1;
-    public static final int PORT_SIZE = 2;
+    public static final int TYPE_LEN = 1;
+    public static final int IP_V4_LEN = 4;
+    public static final int IP_V6_LEN = 16;
+    public static final int DOMAIN_LEN_LEN = 1;
+    public static final int PORT_LEN = 2;
 
     private final ConnectionAddrType type;
     private final byte[] addr;
@@ -62,60 +62,68 @@ public class ConnectionAddr implements SocksMessage {
         this.port = port;
     }
 
+    @Override
+    public int length() {
+        switch (type) {
+            case DOMAIN_NAME:
+                return TYPE_LEN + DOMAIN_LEN_LEN + addr.length + PORT_LEN;
+            default:
+                return TYPE_LEN + addr.length + PORT_LEN;
+        }
+    }
+
     /**
      * Decoder of {@link ConnectionAddr}.
      *
      * @author shuaicj 2017/09/28
      */
     @Component
-    public static class Decoder implements SocksDecoder<ConnectionAddr> {
+    public static class Decoder implements MessageDecoder<ConnectionAddr> {
 
         @Override
         public ConnectionAddr decode(ByteBuf in) throws DecoderException {
             if (!in.isReadable()) {
                 return null;
             }
-            int start = in.readerIndex();
+            int mark = in.readerIndex();
 
-            ConnectionAddrType type = ConnectionAddrType.valueOf(in.getUnsignedByte(start));
+            ConnectionAddrType type = ConnectionAddrType.valueOf(in.readUnsignedByte());
+
             byte[] addr = null;
-            int port = 0;
             switch (type) {
                 case IP_V4: {
-                    if (!in.isReadable(TYPE_SIZE + IP_V4_SIZE + PORT_SIZE)) {
+                    if (!in.isReadable(IP_V4_LEN + PORT_LEN)) {
+                        in.readerIndex(mark);
                         return null;
                     }
-                    addr = new byte[IP_V4_SIZE];
-                    in.getBytes(start + TYPE_SIZE, addr);
-                    port = in.getUnsignedShort(start + TYPE_SIZE + IP_V4_SIZE);
-                    in.readerIndex(start + TYPE_SIZE + IP_V4_SIZE + PORT_SIZE);
+                    addr = new byte[IP_V4_LEN];
                     break;
                 }
                 case IP_V6: {
-                    if (!in.isReadable(TYPE_SIZE + IP_V6_SIZE + PORT_SIZE)) {
+                    if (!in.isReadable(IP_V6_LEN + PORT_LEN)) {
+                        in.readerIndex(mark);
                         return null;
                     }
-                    addr = new byte[IP_V6_SIZE];
-                    in.getBytes(start + TYPE_SIZE, addr);
-                    port = in.getUnsignedShort(start + TYPE_SIZE + IP_V6_SIZE);
-                    in.readerIndex(start + TYPE_SIZE + IP_V6_SIZE + PORT_SIZE);
+                    addr = new byte[IP_V6_LEN];
                     break;
                 }
                 case DOMAIN_NAME: {
-                    if (!in.isReadable(TYPE_SIZE + DOMAIN_LEN_SIZE)) {
+                    if (!in.isReadable(DOMAIN_LEN_LEN)) {
+                        in.readerIndex(mark);
                         return null;
                     }
-                    int domainLen = in.getUnsignedByte(start + TYPE_SIZE);
-                    if (!in.isReadable(TYPE_SIZE + DOMAIN_LEN_SIZE + domainLen + PORT_SIZE)) {
+                    int domainLen = in.readUnsignedByte();
+                    if (!in.isReadable(domainLen + PORT_LEN)) {
+                        in.readerIndex(mark);
                         return null;
                     }
                     addr = new byte[domainLen];
-                    in.getBytes(start + TYPE_SIZE + DOMAIN_LEN_SIZE, addr);
-                    port = in.getUnsignedShort(start + TYPE_SIZE + DOMAIN_LEN_SIZE + domainLen);
-                    in.readerIndex(start + TYPE_SIZE + DOMAIN_LEN_SIZE + domainLen + PORT_SIZE);
                     break;
                 }
             }
+            in.readBytes(addr);
+
+            int port = in.readUnsignedShort();
 
             return ConnectionAddr.builder()
                     .type(type)
@@ -131,7 +139,7 @@ public class ConnectionAddr implements SocksMessage {
      * @author shuaicj 2017/09/28
      */
     @Component
-    public static class Encoder implements SocksEncoder<ConnectionAddr> {
+    public static class Encoder implements MessageEncoder<ConnectionAddr> {
 
         @Override
         public void encode(ConnectionAddr msg, ByteBuf out) throws EncoderException {

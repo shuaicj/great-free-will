@@ -1,4 +1,4 @@
-package shuaicj.hobby.great.free.will.daemon.client;
+package shuaicj.hobby.great.free.will.daemon.server;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -29,7 +29,7 @@ import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionRep;
 import shuaicj.hobby.great.free.will.util.Utils;
 
 /**
- * A handler used in client daemon to handle data from native.
+ * A handler used in client daemon to handle data from the safe tunnel.
  *
  *                                           |
  *                                           |
@@ -45,13 +45,13 @@ import shuaicj.hobby.great.free.will.util.Utils;
  *                                           |
  *                                        THE WALL
  *
- * @author shuaicj 2017/10/09
+ * @author shuaicj 2017/10/11
  */
 @Component
 @Scope("prototype")
-@Profile("client")
+@Profile("server")
 @Slf4j
-public class ClientDaemonNativeHandler extends ChannelInboundHandlerAdapter {
+public class ServerDaemonTunnelHandler extends ChannelInboundHandlerAdapter {
 
     private Channel nativeChannel;
     private Channel tunnelChannel;
@@ -103,7 +103,7 @@ public class ClientDaemonNativeHandler extends ChannelInboundHandlerAdapter {
         Bootstrap b = new Bootstrap();
         b.group(nativeChannel.eventLoop()) // use the same EventLoop
                 .channel(nativeChannel.getClass())
-                .handler(appCtx.getBean(ClientDaemonTunnelHandler.class, nativeChannel))
+                .handler(appCtx.getBean(shuaicj.hobby.great.free.will.daemon.client.ClientDaemonTunnelHandler.class, nativeChannel))
                 .option(ChannelOption.SO_KEEPALIVE, true);
         ChannelFuture f = b.connect(inetAddress(req), req.dst().port());
         tunnelChannel = f.channel();
@@ -118,7 +118,6 @@ public class ClientDaemonNativeHandler extends ChannelInboundHandlerAdapter {
                         .build();
                 nativeChannel.writeAndFlush(rsp);
             } else {
-                logger.error("shit happens", future.cause());
                 nativeChannel.close();
             }
         });

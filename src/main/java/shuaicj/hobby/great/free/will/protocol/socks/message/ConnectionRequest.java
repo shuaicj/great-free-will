@@ -1,6 +1,6 @@
-package shuaicj.hobby.great.free.will.socks.message;
+package shuaicj.hobby.great.free.will.protocol.socks.message;
 
-import static shuaicj.hobby.great.free.will.socks.SocksConst.VERSION;
+import static shuaicj.hobby.great.free.will.protocol.socks.SocksConst.VERSION;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
@@ -9,10 +9,10 @@ import lombok.Getter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksDecoder;
-import shuaicj.hobby.great.free.will.socks.SocksMessage;
-import shuaicj.hobby.great.free.will.socks.message.part.ConnectionAddr;
-import shuaicj.hobby.great.free.will.socks.type.ConnectionCmd;
+import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
+import shuaicj.hobby.great.free.will.protocol.Message;
+import shuaicj.hobby.great.free.will.protocol.socks.message.part.ConnectionAddr;
+import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionCmd;
 
 /**
  * SOCKS5 connection request.
@@ -29,11 +29,11 @@ import shuaicj.hobby.great.free.will.socks.type.ConnectionCmd;
  */
 @Getter
 @ToString
-public class ConnectionRequest implements SocksMessage {
+public class ConnectionRequest implements Message {
 
-    public static final int VER_SIZE = 1;
-    public static final int CMD_SIZE = 1;
-    public static final int RSV_SIZE = 1;
+    public static final int VER_LEN = 1;
+    public static final int CMD_LEN = 1;
+    public static final int RSV_LEN = 1;
 
     private final short ver;
     private final ConnectionCmd cmd;
@@ -48,23 +48,27 @@ public class ConnectionRequest implements SocksMessage {
         this.dst = dst;
     }
 
+    @Override
+    public int length() {
+        return VER_LEN + CMD_LEN + RSV_LEN + dst.length();
+    }
+
     /**
      * Decoder of {@link ConnectionRequest}.
      *
      * @author shuaicj 2017/09/27
      */
     @Component
-    public static class Decoder implements SocksDecoder<ConnectionRequest> {
+    public static class Decoder implements MessageDecoder<ConnectionRequest> {
 
         @Autowired ConnectionAddr.Decoder addrDecoder;
 
         @Override
         public ConnectionRequest decode(ByteBuf in) throws DecoderException {
-            if (!in.isReadable(VER_SIZE + CMD_SIZE + RSV_SIZE)) {
+            if (!in.isReadable(VER_LEN + CMD_LEN + RSV_LEN)) {
                 return null;
             }
-
-            in.markReaderIndex();
+            int mark = in.readerIndex();
 
             short ver = in.readUnsignedByte();
             if (ver != VERSION) {
@@ -76,7 +80,7 @@ public class ConnectionRequest implements SocksMessage {
 
             ConnectionAddr dst = addrDecoder.decode(in);
             if (dst == null) {
-                in.resetReaderIndex();
+                in.readerIndex(mark);
                 return null;
             }
 

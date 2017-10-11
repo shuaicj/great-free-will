@@ -1,4 +1,4 @@
-package shuaicj.hobby.great.free.will.socks.message;
+package shuaicj.hobby.great.free.will.protocol.socks.message;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
@@ -7,9 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksDecoder;
-import shuaicj.hobby.great.free.will.socks.SocksEncoder;
-import shuaicj.hobby.great.free.will.socks.SocksMessage;
+import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
+import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
+import shuaicj.hobby.great.free.will.protocol.Message;
 
 /**
  /**
@@ -21,13 +21,20 @@ import shuaicj.hobby.great.free.will.socks.SocksMessage;
  */
 @Getter
 @ToString
-public class DataTransport implements SocksMessage {
+public class DataTransport implements Message {
 
     private final ByteBuf data;
+    private final int length;
 
     @Builder
     private DataTransport(ByteBuf data) {
         this.data = data;
+        this.length = data.readableBytes();
+    }
+
+    @Override
+    public int length() {
+        return length;
     }
 
     /**
@@ -36,7 +43,7 @@ public class DataTransport implements SocksMessage {
      * @author shuaicj 2017/10/09
      */
     @Component
-    public static class Decoder implements SocksDecoder<DataTransport> {
+    public static class Decoder implements MessageDecoder<DataTransport> {
 
         @Override
         public DataTransport decode(ByteBuf in) throws DecoderException {
@@ -52,7 +59,7 @@ public class DataTransport implements SocksMessage {
      * @author shuaicj 2017/10/09
      */
     @Component
-    public static class Encoder implements SocksEncoder<DataTransport> {
+    public static class Encoder implements MessageEncoder<DataTransport> {
 
         @Override
         public void encode(DataTransport msg, ByteBuf out) throws EncoderException {

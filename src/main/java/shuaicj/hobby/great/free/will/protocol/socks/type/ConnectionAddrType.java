@@ -1,4 +1,4 @@
-package shuaicj.hobby.great.free.will.socks.type;
+package shuaicj.hobby.great.free.will.protocol.socks.type;
 
 import lombok.Getter;
 

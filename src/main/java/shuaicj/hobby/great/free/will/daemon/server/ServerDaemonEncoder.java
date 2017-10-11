@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksMessage;
+import shuaicj.hobby.great.free.will.protocol.Message;
 
 /**
  * Netty encoder of server daemon.
@@ -18,10 +18,10 @@ import shuaicj.hobby.great.free.will.socks.SocksMessage;
 @Scope("prototype")
 @Profile("server")
 @Slf4j
-public class ServerDaemonEncoder extends MessageToByteEncoder<SocksMessage> {
+public class ServerDaemonEncoder extends MessageToByteEncoder<Message> {
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, SocksMessage msg, ByteBuf out) throws Exception {
+    protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
 
     }
 }

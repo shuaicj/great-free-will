@@ -1,4 +1,4 @@
-package shuaicj.hobby.great.free.will.socks;
+package shuaicj.hobby.great.free.will.protocol.socks;
 
 /**
  * The state of processing.

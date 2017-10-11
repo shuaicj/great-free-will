@@ -1,6 +1,6 @@
-package shuaicj.hobby.great.free.will.socks.message;
+package shuaicj.hobby.great.free.will.protocol.socks.message;
 
-import static shuaicj.hobby.great.free.will.socks.SocksConst.VERSION;
+import static shuaicj.hobby.great.free.will.protocol.socks.SocksConst.VERSION;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,9 +14,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksDecoder;
-import shuaicj.hobby.great.free.will.socks.SocksMessage;
-import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
+import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
+import shuaicj.hobby.great.free.will.protocol.Message;
+import shuaicj.hobby.great.free.will.protocol.socks.type.AuthMethod;
 
 /**
  * SOCKS5 authentication method selection request.
@@ -33,10 +33,10 @@ import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
  */
 @Getter
 @ToString
-public class AuthMethodRequest implements SocksMessage {
+public class AuthMethodRequest implements Message {
 
-    public static final int VER_SIZE = 1;
-    public static final int NMETHODS_SIZE = 1;
+    public static final int VER_LEN = 1;
+    public static final int NMETHODS_LEN = 1;
 
     private final short ver;
     private final short nmethods;
@@ -49,21 +49,25 @@ public class AuthMethodRequest implements SocksMessage {
         this.methods = Collections.unmodifiableSet(methods);
     }
 
+    @Override
+    public int length() {
+        return VER_LEN + NMETHODS_LEN + nmethods;
+    }
+
     /**
      * Decoder of {@link AuthMethodRequest}.
      *
      * @author shuaicj 2017/09/27
      */
     @Component
-    public static class Decoder implements SocksDecoder<AuthMethodRequest> {
+    public static class Decoder implements MessageDecoder<AuthMethodRequest> {
 
         @Override
         public AuthMethodRequest decode(ByteBuf in) throws DecoderException {
-            if (!in.isReadable(VER_SIZE + NMETHODS_SIZE)) {
+            if (!in.isReadable(VER_LEN + NMETHODS_LEN)) {
                 return null;
             }
-
-            in.markReaderIndex();
+            int mark = in.readerIndex();
 
             short ver = in.readUnsignedByte();
             if (ver != VERSION) {
@@ -72,7 +76,7 @@ public class AuthMethodRequest implements SocksMessage {
 
             short nmethods = in.readUnsignedByte();
             if (!in.isReadable(nmethods)) {
-                in.resetReaderIndex();
+                in.readerIndex(mark);
                 return null;
             }
 

@@ -1,4 +1,4 @@
-package shuaicj.hobby.great.free.will.socks.message;
+package shuaicj.hobby.great.free.will.protocol.socks.message;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.EncoderException;
@@ -6,9 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksEncoder;
-import shuaicj.hobby.great.free.will.socks.SocksMessage;
-import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
+import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
+import shuaicj.hobby.great.free.will.protocol.Message;
+import shuaicj.hobby.great.free.will.protocol.socks.type.AuthMethod;
 
 /**
  * SOCKS5 authentication method selection response.
@@ -25,7 +25,10 @@ import shuaicj.hobby.great.free.will.socks.type.AuthMethod;
  */
 @Getter
 @ToString
-public class AuthMethodResponse implements SocksMessage {
+public class AuthMethodResponse implements Message {
+
+    public static final int VER_LEN = 1;
+    public static final int METHOD_LEN = 1;
 
     private final short ver;
     private final AuthMethod method;
@@ -36,13 +39,18 @@ public class AuthMethodResponse implements SocksMessage {
         this.method = method;
     }
 
+    @Override
+    public int length() {
+        return VER_LEN + METHOD_LEN;
+    }
+
     /**
      * Encoder of {@link AuthMethodResponse}.
      *
      * @author shuaicj 2017/09/27
      */
     @Component
-    public static class Encoder implements SocksEncoder<AuthMethodResponse> {
+    public static class Encoder implements MessageEncoder<AuthMethodResponse> {
 
         @Override
         public void encode(AuthMethodResponse msg, ByteBuf out) throws EncoderException {

@@ -10,10 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.socks.SocksState;
-import shuaicj.hobby.great.free.will.socks.message.AuthMethodRequest;
-import shuaicj.hobby.great.free.will.socks.message.ConnectionRequest;
-import shuaicj.hobby.great.free.will.socks.message.DataTransport;
+import shuaicj.hobby.great.free.will.protocol.socks.SocksState;
+import shuaicj.hobby.great.free.will.protocol.socks.message.AuthMethodRequest;
+import shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionRequest;
+import shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport;
 
 /**
  * Netty decoder of client daemon.
