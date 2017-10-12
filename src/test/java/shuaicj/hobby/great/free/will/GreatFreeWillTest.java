@@ -22,8 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 public class GreatFreeWillTest {
 
-    @Value("${client.daemon.port}")
-    int port;
+    @Value("${client.daemon.port}") int port;
 
     @Test
     public void sock5() throws Exception {

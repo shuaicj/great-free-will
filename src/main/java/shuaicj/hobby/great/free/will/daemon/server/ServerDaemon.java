@@ -46,8 +46,8 @@ public class ServerDaemon {
                             protected void initChannel(SocketChannel ch) throws Exception {
                                 ch.pipeline().addLast(
                                         appCtx.getBean(LoggingHandler.class),
-                                        appCtx.getBean(ServerDaemonDecoder.class),
-                                        appCtx.getBean(ServerDaemonEncoder.class),
+                                        appCtx.getBean(ServerDaemonTunnelDecoder.class),
+                                        appCtx.getBean(ServerDaemonTunnelEncoder.class),
                                         appCtx.getBean(ServerDaemonTunnelHandler.class)
                                 );
                             }

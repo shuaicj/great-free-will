@@ -4,6 +4,7 @@ import static shuaicj.hobby.great.free.will.protocol.socks.SocksConst.VERSION;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
 import shuaicj.hobby.great.free.will.protocol.Message;
+import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
 import shuaicj.hobby.great.free.will.protocol.socks.message.part.ConnectionAddr;
 import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionCmd;
 
@@ -90,6 +92,25 @@ public class ConnectionRequest implements Message {
                     .rsv(rsv)
                     .dst(dst)
                     .build();
+        }
+    }
+
+    /**
+     * Encoder of {@link ConnectionRequest}.
+     *
+     * @author shuaicj 2017/10/12
+     */
+    @Component
+    public static class Encoder implements MessageEncoder<ConnectionRequest> {
+
+        @Autowired ConnectionAddr.Encoder addrEncoder;
+
+        @Override
+        public void encode(ConnectionRequest msg, ByteBuf out) throws EncoderException {
+            out.writeByte(msg.ver);
+            out.writeByte(msg.cmd.value());
+            out.writeByte(msg.rsv);
+            addrEncoder.encode(msg.dst, out);
         }
     }
 }

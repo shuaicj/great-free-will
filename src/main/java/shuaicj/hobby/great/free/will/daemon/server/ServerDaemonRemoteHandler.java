@@ -1,5 +1,6 @@
 package shuaicj.hobby.great.free.will.daemon.server;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -7,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport;
+import shuaicj.hobby.great.free.will.protocol.tunnel.message.TunnelDataTransport;
 import shuaicj.hobby.great.free.will.util.Utils;
 
 /**
@@ -48,7 +51,11 @@ public class ServerDaemonRemoteHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        tunnelChannel.writeAndFlush(msg); // just forward
+        tunnelChannel.writeAndFlush(
+                TunnelDataTransport.builder().body(
+                        DataTransport.builder()
+                                .data((ByteBuf) msg)
+                                .build()).build());
     }
 
     @Override

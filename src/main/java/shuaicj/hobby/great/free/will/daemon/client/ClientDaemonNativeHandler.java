@@ -1,17 +1,18 @@
 package shuaicj.hobby.great.free.will.daemon.client;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
@@ -23,9 +24,9 @@ import shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionRequest;
 import shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionResponse;
 import shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport;
 import shuaicj.hobby.great.free.will.protocol.socks.type.AuthMethod;
-import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionAddrType;
-import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionCmd;
 import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionRep;
+import shuaicj.hobby.great.free.will.protocol.tunnel.message.TunnelConnectionRequest;
+import shuaicj.hobby.great.free.will.protocol.tunnel.message.TunnelDataTransport;
 import shuaicj.hobby.great.free.will.util.Utils;
 
 /**
@@ -56,6 +57,8 @@ public class ClientDaemonNativeHandler extends ChannelInboundHandlerAdapter {
     private Channel nativeChannel;
     private Channel tunnelChannel;
 
+    @Value("${server.daemon.host}") private String serverDaemonHost;
+    @Value("${server.daemon.port}") private int serverDaemonPort;
     @Autowired private ApplicationContext appCtx;
 
     @Override
@@ -77,62 +80,67 @@ public class ClientDaemonNativeHandler extends ChannelInboundHandlerAdapter {
             handleDataTransport((DataTransport) msg);
             return;
         }
-        throw new IllegalStateException("illegal message");
+        throw new IllegalStateException("illegal message " + msg);
     }
 
     private void handleAuthMethodRequest(AuthMethodRequest req) {
-        if (!req.methods().contains(AuthMethod.NO_AUTHENTICATION_REQUIRED)) {
-            nativeChannel.close(); // only support NO_AUTHENTICATION_REQUIRED
+        if (!req.methods().contains(AuthMethod.NO_AUTHENTICATION_REQUIRED)) { // only support NO_AUTHENTICATION_REQUIRED
+            logger.error("no acceptable auth method in request {}", req);
+            nativeChannel.writeAndFlush(
+                    AuthMethodResponse.builder()
+                            .ver(SocksConst.VERSION)
+                            .method(AuthMethod.NO_ACCEPTABLE_METHODS)
+                            .build())
+                    .addListener(ChannelFutureListener.CLOSE);
             return;
         }
-        AuthMethodResponse rsp = AuthMethodResponse.builder()
-                .ver(SocksConst.VERSION)
-                .method(AuthMethod.NO_AUTHENTICATION_REQUIRED)
-                .build();
-        nativeChannel.writeAndFlush(rsp);
+        nativeChannel.writeAndFlush(
+                AuthMethodResponse.builder()
+                        .ver(SocksConst.VERSION)
+                        .method(AuthMethod.NO_AUTHENTICATION_REQUIRED)
+                        .build());
     }
 
     private void handleConnectionRequest(final ConnectionRequest req) throws Exception {
-        if (!req.cmd().equals(ConnectionCmd.CONNECT)) {
-            nativeChannel.close(); // only support TCP CONNECT
-            return;
-        }
-
         nativeChannel.config().setAutoRead(false); // disable AutoRead until connection is ready
 
         Bootstrap b = new Bootstrap();
         b.group(nativeChannel.eventLoop()) // use the same EventLoop
                 .channel(nativeChannel.getClass())
-                .handler(appCtx.getBean(ClientDaemonTunnelHandler.class, nativeChannel))
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(
+                                appCtx.getBean(LoggingHandler.class),
+                                appCtx.getBean(ClientDaemonTunnelDecoder.class),
+                                appCtx.getBean(ClientDaemonTunnelEncoder.class),
+                                appCtx.getBean(ClientDaemonTunnelHandler.class, nativeChannel)
+                        );
+                    }
+                })
                 .option(ChannelOption.SO_KEEPALIVE, true);
-        ChannelFuture f = b.connect(inetAddress(req), req.dst().port());
+        ChannelFuture f = b.connect(serverDaemonHost, serverDaemonPort);
         tunnelChannel = f.channel();
 
         f.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
+                tunnelChannel.writeAndFlush(TunnelConnectionRequest.builder().body(req).build());
                 nativeChannel.config().setAutoRead(true); // connection is ready, enable AutoRead
-                ConnectionResponse rsp = ConnectionResponse.builder()
-                        .ver(SocksConst.VERSION)
-                        .rep(ConnectionRep.SUCCEEDED)
-                        .bnd(req.dst())
-                        .build();
-                nativeChannel.writeAndFlush(rsp);
             } else {
                 logger.error("shit happens", future.cause());
-                nativeChannel.close();
+                nativeChannel.writeAndFlush(
+                        ConnectionResponse.builder()
+                                .ver(SocksConst.VERSION)
+                                .rep(ConnectionRep.HOST_UNREACHABLE)
+                                .bnd(req.dst())
+                                .build())
+                        .addListener(ChannelFutureListener.CLOSE);
             }
         });
     }
 
     private void handleDataTransport(DataTransport in) {
-        tunnelChannel.writeAndFlush(in.data());
-    }
-
-    private InetAddress inetAddress(ConnectionRequest req) throws UnknownHostException {
-        if (req.dst().type().equals(ConnectionAddrType.DOMAIN_NAME)) {
-            return InetAddress.getByName(new String(req.dst().addr())); // domain name
-        }
-        return InetAddress.getByAddress(req.dst().addr()); // IPv4, IPv6
+        tunnelChannel.writeAndFlush(TunnelDataTransport.builder().body(in).build());
     }
 
     @Override

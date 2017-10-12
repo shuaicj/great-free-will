@@ -1,14 +1,18 @@
 package shuaicj.hobby.great.free.will.protocol.socks.message;
 
+import static shuaicj.hobby.great.free.will.protocol.socks.SocksConst.VERSION;
+
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
 import shuaicj.hobby.great.free.will.protocol.Message;
+import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
+import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
 import shuaicj.hobby.great.free.will.protocol.socks.message.part.ConnectionAddr;
 import shuaicj.hobby.great.free.will.protocol.socks.type.ConnectionRep;
 
@@ -49,6 +53,46 @@ public class ConnectionResponse implements Message {
     @Override
     public int length() {
         return VER_LEN + REP_LEN + RSV_LEN + bnd.length();
+    }
+
+    /**
+     * Decoder of {@link ConnectionResponse}.
+     *
+     * @author shuaicj 2017/10/12
+     */
+    @Component
+    public static class Decoder implements MessageDecoder<ConnectionResponse> {
+
+        @Autowired ConnectionAddr.Decoder addrDecoder;
+
+        @Override
+        public ConnectionResponse decode(ByteBuf in) throws DecoderException {
+            if (!in.isReadable(VER_LEN + REP_LEN + RSV_LEN)) {
+                return null;
+            }
+            int mark = in.readerIndex();
+
+            short ver = in.readUnsignedByte();
+            if (ver != VERSION) {
+                throw new DecoderException("unsupported ver: " + ver);
+            }
+
+            ConnectionRep rep = ConnectionRep.valueOf(in.readUnsignedByte());
+            short rsv = in.readUnsignedByte();
+
+            ConnectionAddr bnd = addrDecoder.decode(in);
+            if (bnd == null) {
+                in.readerIndex(mark);
+                return null;
+            }
+
+            return ConnectionResponse.builder()
+                    .ver(ver)
+                    .rep(rep)
+                    .rsv(rsv)
+                    .bnd(bnd)
+                    .build();
+        }
     }
 
     /**

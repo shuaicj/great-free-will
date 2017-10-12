@@ -1,4 +1,4 @@
-spring.profiles.active: ${daemon.mode:client}
+spring.profiles.active: ${daemon.mode:dev}
 
 logging.config: classpath:config/logback.xml
 
@@ -13,6 +13,14 @@ client.daemon.port: 8080
 spring.profiles: server
 
 server.daemon.port: 9090
+
+---
+
+spring.profiles: dev
+spring.profiles.include:
+  - client
+  - server
+server.daemon.host: 127.0.0.1
 
 ---
 

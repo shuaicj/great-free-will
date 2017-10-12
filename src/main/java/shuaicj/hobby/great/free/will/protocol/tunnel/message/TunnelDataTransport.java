@@ -13,28 +13,30 @@ import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.protocol.Message;
 import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
 import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
-import shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionRequest;
+import shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport;
 
 /**
+ /**
  * Tunnel connection request. It consists of a 4 byte body length value
- * and a socks {@link shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionRequest}.
+ * and a socks {@link shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport}.
  *
  *   +-------------+-------------------+
  *   | BODY_LENGTH |        BODY       |
  *   +-------------+-------------------+
- *   |      4      | ConnectionRequest |
+ *   |      4      |   DataTransport   |
  *   +-------------+-------------------+
  *
- * @author shuaicj 2017/10/11
+ *
+ * @author shuaicj 2017/10/12
  */
 @Getter
 @ToString
-public class TunnelConnectionRequest implements Message {
+public class TunnelDataTransport implements Message {
 
-    private final ConnectionRequest body;
+    private final DataTransport body;
 
     @Builder
-    private TunnelConnectionRequest(ConnectionRequest body) {
+    private TunnelDataTransport(DataTransport body) {
         this.body = body;
     }
 
@@ -44,17 +46,17 @@ public class TunnelConnectionRequest implements Message {
     }
 
     /**
-     * Decoder of {@link TunnelConnectionRequest}.
+     * Decoder of {@link TunnelDataTransport}.
      *
-     * @author shuaicj 2017/10/11
+     * @author shuaicj 2017/10/12
      */
     @Component
-    public static class Decoder implements MessageDecoder<TunnelConnectionRequest> {
+    public static class Decoder implements MessageDecoder<TunnelDataTransport> {
 
-        @Autowired ConnectionRequest.Decoder bodyDecoder;
+        @Autowired DataTransport.Decoder bodyDecoder;
 
         @Override
-        public TunnelConnectionRequest decode(ByteBuf in) throws DecoderException {
+        public TunnelDataTransport decode(ByteBuf in) throws DecoderException {
             if (!in.isReadable(BODY_LEN_LEN)) {
                 return null;
             }
@@ -66,30 +68,30 @@ public class TunnelConnectionRequest implements Message {
                 return null;
             }
 
-            ConnectionRequest body = bodyDecoder.decode(in);
+            DataTransport body = bodyDecoder.decode(in);
             if (body == null) {
                 in.readerIndex(mark);
                 return null;
             }
 
-            return TunnelConnectionRequest.builder()
+            return TunnelDataTransport.builder()
                     .body(body)
                     .build();
         }
     }
 
     /**
-     * Encoder of {@link TunnelConnectionRequest}.
+     * Encoder of {@link TunnelDataTransport}.
      *
      * @author shuaicj 2017/10/12
      */
     @Component
-    public static class Encoder implements MessageEncoder<TunnelConnectionRequest> {
+    public static class Encoder implements MessageEncoder<TunnelDataTransport> {
 
-        @Autowired ConnectionRequest.Encoder bodyEncoder;
+        @Autowired DataTransport.Encoder bodyEncoder;
 
         @Override
-        public void encode(TunnelConnectionRequest msg, ByteBuf out) throws EncoderException {
+        public void encode(TunnelDataTransport msg, ByteBuf out) throws EncoderException {
             out.writeInt(msg.body.length());
             bodyEncoder.encode(msg.body, out);
         }

@@ -46,8 +46,8 @@ public class ClientDaemon {
                             protected void initChannel(SocketChannel ch) throws Exception {
                                 ch.pipeline().addLast(
                                         appCtx.getBean(LoggingHandler.class),
-                                        appCtx.getBean(ClientDaemonDecoder.class),
-                                        appCtx.getBean(ClientDaemonEncoder.class),
+                                        appCtx.getBean(ClientDaemonNativeDecoder.class),
+                                        appCtx.getBean(ClientDaemonNativeEncoder.class),
                                         appCtx.getBean(ClientDaemonNativeHandler.class)
                                 );
                             }
