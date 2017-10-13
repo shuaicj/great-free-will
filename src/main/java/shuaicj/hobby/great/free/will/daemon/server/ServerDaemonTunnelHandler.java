@@ -9,6 +9,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,7 +97,7 @@ public class ServerDaemonTunnelHandler extends ChannelInboundHandlerAdapter {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(
-                                appCtx.getBean(LoggingHandler.class),
+                                new LoggingHandler(LogLevel.DEBUG),
                                 appCtx.getBean(ServerDaemonRemoteHandler.class, tunnelChannel)
                         );
                     }

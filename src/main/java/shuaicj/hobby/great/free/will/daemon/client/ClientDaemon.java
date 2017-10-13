@@ -9,6 +9,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,12 +41,12 @@ public class ClientDaemon {
                 ServerBootstrap b = new ServerBootstrap();
                 b.group(bossGroup, workerGroup)
                         .channel(NioServerSocketChannel.class)
-                        .handler(appCtx.getBean(LoggingHandler.class))
+                        .handler(new LoggingHandler(LogLevel.DEBUG))
                         .childHandler(new ChannelInitializer<SocketChannel>() {
                             @Override
                             protected void initChannel(SocketChannel ch) throws Exception {
                                 ch.pipeline().addLast(
-                                        appCtx.getBean(LoggingHandler.class),
+                                        new LoggingHandler(LogLevel.DEBUG),
                                         appCtx.getBean(ClientDaemonNativeDecoder.class),
                                         appCtx.getBean(ClientDaemonNativeEncoder.class),
                                         appCtx.getBean(ClientDaemonNativeHandler.class)

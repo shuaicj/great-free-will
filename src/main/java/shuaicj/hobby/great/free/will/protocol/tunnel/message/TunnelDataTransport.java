@@ -68,7 +68,7 @@ public class TunnelDataTransport implements Message {
                 return null;
             }
 
-            DataTransport body = bodyDecoder.decode(in);
+            DataTransport body = bodyDecoder.decode(in.readBytes(bodyLength));
             if (body == null) {
                 in.readerIndex(mark);
                 return null;
