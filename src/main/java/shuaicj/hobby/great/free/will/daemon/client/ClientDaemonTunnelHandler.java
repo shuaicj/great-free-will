@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionResponse;
 import shuaicj.hobby.great.free.will.protocol.tunnel.message.TunnelConnectionResponse;
 import shuaicj.hobby.great.free.will.protocol.tunnel.message.TunnelDataTransport;
 import shuaicj.hobby.great.free.will.util.Utils;
@@ -51,7 +52,13 @@ public class ClientDaemonTunnelHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof TunnelConnectionResponse) {
-            nativeChannel.writeAndFlush(((TunnelConnectionResponse) msg).body());
+            ConnectionResponse rsp = ((TunnelConnectionResponse) msg).body();
+            nativeChannel.writeAndFlush(
+                    ConnectionResponse.builder()
+                            .ver(rsp.ver())
+                            .rep(rsp.rep())
+                            .bnd(rsp.bnd())
+                            .build());
             return;
         }
         if (msg instanceof TunnelDataTransport) {

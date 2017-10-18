@@ -75,6 +75,7 @@ public class ServerDaemonTunnelHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void handleTunnelConnectionRequest(final TunnelConnectionRequest req) throws Exception {
+        final short rsv = (short) (Math.random() * 128);
         if (!req.body().cmd().equals(ConnectionCmd.CONNECT)) { // only support TCP CONNECT
             logger.error("unsupported command in request {}", req.body());
             tunnelChannel.writeAndFlush(
@@ -82,6 +83,7 @@ public class ServerDaemonTunnelHandler extends ChannelInboundHandlerAdapter {
                             ConnectionResponse.builder()
                                     .ver(SocksConst.VERSION)
                                     .rep(ConnectionRep.COMMAND_NOT_SUPPORTED)
+                                    .rsv(rsv)
                                     .bnd(req.body().dst())
                                     .build()).build())
                     .addListener(ChannelFutureListener.CLOSE);
@@ -114,6 +116,7 @@ public class ServerDaemonTunnelHandler extends ChannelInboundHandlerAdapter {
                                 ConnectionResponse.builder()
                                         .ver(SocksConst.VERSION)
                                         .rep(ConnectionRep.SUCCEEDED)
+                                        .rsv(rsv)
                                         .bnd(req.body().dst())
                                         .build()).build());
             } else {
@@ -123,6 +126,7 @@ public class ServerDaemonTunnelHandler extends ChannelInboundHandlerAdapter {
                                 ConnectionResponse.builder()
                                         .ver(SocksConst.VERSION)
                                         .rep(ConnectionRep.HOST_UNREACHABLE)
+                                        .rsv(rsv)
                                         .bnd(req.body().dst())
                                         .build()).build())
                         .addListener(ChannelFutureListener.CLOSE);
