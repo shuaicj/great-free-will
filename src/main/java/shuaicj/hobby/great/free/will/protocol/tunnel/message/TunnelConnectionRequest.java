@@ -16,13 +16,13 @@ import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
 import shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionRequest;
 
 /**
- * Tunnel connection request. It consists of a 4 byte body length value
+ * Tunnel connection request. It consists of a 2 byte body length value
  * and a socks {@link shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionRequest}.
  *
  *   +-------------+-------------------+
  *   | BODY_LENGTH |        BODY       |
  *   +-------------+-------------------+
- *   |      4      | ConnectionRequest |
+ *   |      2      | ConnectionRequest |
  *   +-------------+-------------------+
  *
  * @author shuaicj 2017/10/11
@@ -60,7 +60,7 @@ public class TunnelConnectionRequest implements Message {
             }
             int mark = in.readerIndex();
 
-            int bodyLength = (int) in.readUnsignedInt();
+            int bodyLength = in.readUnsignedShort();
             if (!in.isReadable(bodyLength)) {
                 in.readerIndex(mark);
                 return null;
@@ -90,7 +90,7 @@ public class TunnelConnectionRequest implements Message {
 
         @Override
         public void encode(TunnelConnectionRequest msg, ByteBuf out) throws EncoderException {
-            out.writeInt(msg.body.length());
+            out.writeShort(msg.body.length());
             bodyEncoder.encode(msg.body, out);
         }
     }

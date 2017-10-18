@@ -16,13 +16,13 @@ import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
 import shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionResponse;
 
 /**
- * Tunnel connection response. It consists of a 4 byte body length value
+ * Tunnel connection response. It consists of a 2 byte body length value
  * and a socks {@link shuaicj.hobby.great.free.will.protocol.socks.message.ConnectionResponse}.
  *
  *   +-------------+--------------------+
  *   | BODY_LENGTH |        BODY        |
  *   +-------------+--------------------+
- *   |      4      | ConnectionResponse |
+ *   |      2      | ConnectionResponse |
  *   +-------------+--------------------+
  *
  * @author shuaicj 2017/10/11
@@ -60,7 +60,7 @@ public class TunnelConnectionResponse implements Message {
             }
             int mark = in.readerIndex();
 
-            int bodyLength = (int) in.readUnsignedInt();
+            int bodyLength = in.readUnsignedShort();
             if (!in.isReadable(bodyLength)) {
                 in.readerIndex(mark);
                 return null;
@@ -90,7 +90,7 @@ public class TunnelConnectionResponse implements Message {
 
         @Override
         public void encode(TunnelConnectionResponse msg, ByteBuf out) throws EncoderException {
-            out.writeInt(msg.body.length());
+            out.writeShort(msg.body.length());
             bodyEncoder.encode(msg.body, out);
         }
     }

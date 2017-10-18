@@ -24,17 +24,15 @@ import shuaicj.hobby.great.free.will.protocol.Message;
 public class DataTransport implements Message {
 
     private final ByteBuf data;
-    private final int length;
 
     @Builder
     private DataTransport(ByteBuf data) {
         this.data = data;
-        this.length = data.readableBytes();
     }
 
     @Override
     public int length() {
-        return length;
+        return data.readableBytes();
     }
 
     /**

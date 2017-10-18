@@ -1,6 +1,7 @@
 package shuaicj.hobby.great.free.will.protocol.tunnel.message;
 
 import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.BODY_LEN_LEN;
+import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.BODY_LEN_MAX;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
@@ -17,13 +18,13 @@ import shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport;
 
 /**
  /**
- * Tunnel connection request. It consists of a 4 byte body length value
+ * Tunnel connection request. It consists of a 2 byte body length value
  * and a socks {@link shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport}.
  *
  *   +-------------+-------------------+
  *   | BODY_LENGTH |        BODY       |
  *   +-------------+-------------------+
- *   |      4      |   DataTransport   |
+ *   |      2      |   DataTransport   |
  *   +-------------+-------------------+
  *
  *
@@ -62,7 +63,7 @@ public class TunnelDataTransport implements Message {
             }
             int mark = in.readerIndex();
 
-            int bodyLength = (int) in.readUnsignedInt();
+            int bodyLength = in.readUnsignedShort();
             if (!in.isReadable(bodyLength)) {
                 in.readerIndex(mark);
                 return null;
@@ -92,7 +93,14 @@ public class TunnelDataTransport implements Message {
 
         @Override
         public void encode(TunnelDataTransport msg, ByteBuf out) throws EncoderException {
-            out.writeInt(msg.body.length());
+            while (msg.body.length() > BODY_LEN_MAX) {
+                out.writeShort(BODY_LEN_MAX);
+                bodyEncoder.encode(
+                        DataTransport.builder()
+                                .data(msg.body.data().readBytes(BODY_LEN_MAX))
+                                .build(), out);
+            }
+            out.writeShort(msg.body.length());
             bodyEncoder.encode(msg.body, out);
         }
     }
