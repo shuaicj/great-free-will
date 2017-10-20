@@ -50,11 +50,6 @@ public class ConnectionResponse implements Message {
         this.bnd = bnd;
     }
 
-    @Override
-    public int length() {
-        return VER_LEN + REP_LEN + RSV_LEN + bnd.length();
-    }
-
     /**
      * Decoder of {@link ConnectionResponse}.
      *
