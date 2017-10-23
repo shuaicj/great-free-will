@@ -6,7 +6,6 @@ logging.level.io.netty.handler.logging.LoggingHandler: DEBUG
 client.daemon.port: 8080
 server.daemon.port: 9090
 server.daemon.host: 127.0.0.1
-daemon.secret: othersdontknowthis
 
 ---
 

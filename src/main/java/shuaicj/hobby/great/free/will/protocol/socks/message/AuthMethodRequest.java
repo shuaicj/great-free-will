@@ -49,6 +49,11 @@ public class AuthMethodRequest implements Message {
         this.methods = Collections.unmodifiableSet(methods);
     }
 
+    @Override
+    public int length() {
+        return VER_LEN + NMETHODS_LEN + nmethods;
+    }
+
     /**
      * Decoder of {@link AuthMethodRequest}.
      *

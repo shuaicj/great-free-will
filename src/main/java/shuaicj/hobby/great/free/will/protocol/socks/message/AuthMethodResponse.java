@@ -39,6 +39,11 @@ public class AuthMethodResponse implements Message {
         this.method = method;
     }
 
+    @Override
+    public int length() {
+        return VER_LEN + METHOD_LEN;
+    }
+
     /**
      * Encoder of {@link AuthMethodResponse}.
      *

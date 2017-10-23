@@ -10,24 +10,22 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.protocol.Message;
 import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
 import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
 import shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport;
-import shuaicj.hobby.great.free.will.protocol.tunnel.cipher.TunnelCipher;
 
 /**
  /**
  * Tunnel connection request. It consists of a 2 byte body length value
- * and a safe socks message {@link shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport}.
+ * and a socks {@link shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport}.
  *
- *   +-------------+---------------------+
- *   | BODY_LENGTH |         BODY        |
- *   +-------------+---------------------+
- *   |      2      | SAFE(DataTransport) |
- *   +-------------+---------------------+
+ *   +-------------+-------------------+
+ *   | BODY_LENGTH |        BODY       |
+ *   +-------------+-------------------+
+ *   |      2      |   DataTransport   |
+ *   +-------------+-------------------+
  *
  *
  * @author shuaicj 2017/10/12
@@ -43,22 +41,20 @@ public class TunnelDataTransport implements Message {
         this.body = body;
     }
 
+    @Override
+    public int length() {
+        return BODY_LEN_LEN + body.length();
+    }
+
     /**
      * Decoder of {@link TunnelDataTransport}.
      *
      * @author shuaicj 2017/10/12
      */
     @Component
-    @Scope("prototype")
     public static class Decoder implements MessageDecoder<TunnelDataTransport> {
 
         @Autowired DataTransport.Decoder bodyDecoder;
-
-        private final TunnelCipher cipher;
-
-        public Decoder(TunnelCipher cipher) {
-            this.cipher = cipher;
-        }
 
         @Override
         public TunnelDataTransport decode(ByteBuf in) throws DecoderException {
@@ -91,27 +87,20 @@ public class TunnelDataTransport implements Message {
      * @author shuaicj 2017/10/12
      */
     @Component
-    @Scope("prototype")
     public static class Encoder implements MessageEncoder<TunnelDataTransport> {
 
         @Autowired DataTransport.Encoder bodyEncoder;
 
-        private final TunnelCipher cipher;
-
-        public Encoder(TunnelCipher cipher) {
-            this.cipher = cipher;
-        }
-
         @Override
         public void encode(TunnelDataTransport msg, ByteBuf out) throws EncoderException {
-            while (msg.body.data().readableBytes() > BODY_LEN_MAX) {
+            while (msg.body.length() > BODY_LEN_MAX) {
                 out.writeShort(BODY_LEN_MAX);
                 bodyEncoder.encode(
                         DataTransport.builder()
                                 .data(msg.body.data().readBytes(BODY_LEN_MAX))
                                 .build(), out);
             }
-            out.writeShort(msg.body.data().readableBytes());
+            out.writeShort(msg.body.length());
             bodyEncoder.encode(msg.body, out);
         }
     }

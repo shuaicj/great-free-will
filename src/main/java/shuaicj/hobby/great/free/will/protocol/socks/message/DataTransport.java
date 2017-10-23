@@ -30,6 +30,11 @@ public class DataTransport implements Message {
         this.data = data;
     }
 
+    @Override
+    public int length() {
+        return data.readableBytes();
+    }
+
     /**
      * Decoder of {@link DataTransport}.
      *

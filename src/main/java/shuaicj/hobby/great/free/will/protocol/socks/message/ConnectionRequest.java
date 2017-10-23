@@ -50,6 +50,11 @@ public class ConnectionRequest implements Message {
         this.dst = dst;
     }
 
+    @Override
+    public int length() {
+        return VER_LEN + CMD_LEN + RSV_LEN + dst.length();
+    }
+
     /**
      * Decoder of {@link ConnectionRequest}.
      *

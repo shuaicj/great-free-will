@@ -62,6 +62,16 @@ public class ConnectionAddr implements Message {
         this.port = port;
     }
 
+    @Override
+    public int length() {
+        switch (type) {
+            case DOMAIN_NAME:
+                return TYPE_LEN + DOMAIN_LEN_LEN + addr.length + PORT_LEN;
+            default:
+                return TYPE_LEN + addr.length + PORT_LEN;
+        }
+    }
+
     /**
      * Decoder of {@link ConnectionAddr}.
      *
