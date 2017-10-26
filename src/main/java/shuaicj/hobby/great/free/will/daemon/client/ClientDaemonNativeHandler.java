@@ -127,13 +127,7 @@ public class ClientDaemonNativeHandler extends ChannelInboundHandlerAdapter {
             if (future.isSuccess()) {
                 nativeChannel.config().setAutoRead(true); // connection is ready, enable AutoRead
                 tunnelChannel.writeAndFlush(
-                        TunnelConnectionRequest.builder().body(
-                                ConnectionRequest.builder()
-                                        .ver(req.ver())
-                                        .cmd(req.cmd())
-                                        .rsv((short) (Math.random() * 128))
-                                        .dst(req.dst())
-                                        .build()).build());
+                        TunnelConnectionRequest.builder().body(req).build());
             } else {
                 logger.error("shit happens", future.cause());
                 nativeChannel.writeAndFlush(
