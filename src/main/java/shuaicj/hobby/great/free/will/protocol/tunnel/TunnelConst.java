@@ -8,4 +8,5 @@ package shuaicj.hobby.great.free.will.protocol.tunnel;
 public final class TunnelConst {
     public static final int BODY_LEN_LEN = 2;
     public static final int BODY_LEN_MAX = 65535;
+    public static final int SALT_LEN_LEN = 2;
 }
