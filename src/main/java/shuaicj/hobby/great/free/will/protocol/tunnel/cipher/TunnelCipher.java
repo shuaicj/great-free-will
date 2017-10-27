@@ -1,10 +1,9 @@
 package shuaicj.hobby.great.free.will.protocol.tunnel.cipher;
 
 import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.BODY_LEN_LEN;
-import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.SALT_LEN_LEN;
+import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.SALT_LEN;
 
 import java.security.GeneralSecurityException;
-import javax.annotation.PostConstruct;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -27,45 +26,61 @@ import org.springframework.util.DigestUtils;
 @Slf4j
 public class TunnelCipher {
 
-    private final byte[] buf = new byte[2048];
+    private byte[] buf;
 
     private Cipher encrypter;
     private Cipher decrypter;
 
     @Autowired private TunnelCipherKeyIV kv;
 
-    @PostConstruct
-    public void init() throws GeneralSecurityException {
-        this.encrypter = Cipher.getInstance("AES/CFB32/NoPadding");
-        this.decrypter = Cipher.getInstance("AES/CFB32/NoPadding");
-        encrypter.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(kv.key, "AES"), new IvParameterSpec(kv.iv));
-        decrypter.init(Cipher.DECRYPT_MODE, new SecretKeySpec(kv.key, "AES"), new IvParameterSpec(kv.iv));
+    private void initBuf() {
+        if (buf == null) {
+            buf = new byte[2048];
+        }
+    }
+
+    private void initEncrypter() throws GeneralSecurityException {
+        if (encrypter == null) {
+            encrypter = Cipher.getInstance("AES/CFB32/NoPadding");
+            encrypter.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(kv.key, "AES"), new IvParameterSpec(kv.iv));
+        }
+    }
+
+    private void initDecrypter() throws GeneralSecurityException {
+        if (decrypter == null) {
+            decrypter = Cipher.getInstance("AES/CFB32/NoPadding");
+            decrypter.init(Cipher.DECRYPT_MODE, new SecretKeySpec(kv.key, "AES"), new IvParameterSpec(kv.iv));
+        }
     }
 
     public ByteBuf encrypt(ByteBuf in) throws GeneralSecurityException {
+        initBuf();
+        initEncrypter();
         return doCrypto(encrypter, in);
     }
 
     public ByteBuf decrypt(ByteBuf in) throws GeneralSecurityException {
+        initBuf();
+        initDecrypter();
         return doCrypto(decrypter, in);
     }
 
     private ByteBuf doCrypto(Cipher cipher, ByteBuf in) throws GeneralSecurityException {
-        if (!in.isReadable(SALT_LEN_LEN + BODY_LEN_LEN)) {
+        if (!in.isReadable(SALT_LEN + BODY_LEN_LEN)) {
             return null;
         }
         int mark = in.readerIndex();
 
-        in.readBytes(buf, 0, SALT_LEN_LEN + BODY_LEN_LEN);
-        int bodyLength = bodyLength(buf, SALT_LEN_LEN);
+        in.readBytes(buf, 0, SALT_LEN + BODY_LEN_LEN);
+        int bodyLength = bodyLength(buf, SALT_LEN);
         if (!in.isReadable(bodyLength)) {
             in.readerIndex(mark);
             cipher.doFinal();
             return null;
         }
 
-        ByteBuf out = in.alloc().buffer(SALT_LEN_LEN + BODY_LEN_LEN + bodyLength);
-        out.writeBytes(buf, 0, SALT_LEN_LEN + BODY_LEN_LEN);
+        ByteBuf out = in.alloc().buffer(SALT_LEN + BODY_LEN_LEN + bodyLength);
+        out.writeBytes(buf, 0, SALT_LEN + BODY_LEN_LEN);
 
         for (int remain = bodyLength; remain > 0; remain -= buf.length) {
             if (remain > buf.length) {
