@@ -2,6 +2,10 @@ package shuaicj.hobby.great.free.will.protocol.tunnel.message;
 
 import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.BODY_LEN_LEN;
 import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.BODY_LEN_MAX;
+import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.SALT_LEN;
+import static shuaicj.hobby.great.free.will.protocol.tunnel.TunnelConst.SALT_MAX;
+
+import java.security.GeneralSecurityException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DecoderException;
@@ -10,23 +14,24 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import shuaicj.hobby.great.free.will.protocol.Message;
 import shuaicj.hobby.great.free.will.protocol.MessageDecoder;
 import shuaicj.hobby.great.free.will.protocol.MessageEncoder;
 import shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport;
+import shuaicj.hobby.great.free.will.protocol.tunnel.cipher.TunnelCipher;
 
 /**
  /**
- * Tunnel connection request. It consists of a 2 byte body length value
+ * Tunnel data transport. It consists of a 2 byte random salt value, a 2 byte body length value
  * and a socks {@link shuaicj.hobby.great.free.will.protocol.socks.message.DataTransport}.
  *
- *   +-------------+-------------------+
- *   | BODY_LENGTH |        BODY       |
- *   +-------------+-------------------+
- *   |      2      |   DataTransport   |
- *   +-------------+-------------------+
- *
+ *   +-------------+-------------+-------------------+
+ *   |     SALT    | BODY_LENGTH |        BODY       |
+ *   +-------------+-------------+-------------------+
+ *   |      2      |      2      |   DataTransport   |
+ *   +-------------+-------------+-------------------+
  *
  * @author shuaicj 2017/10/12
  */
@@ -43,7 +48,7 @@ public class TunnelDataTransport implements Message {
 
     @Override
     public int length() {
-        return BODY_LEN_LEN + body.length();
+        return SALT_LEN + BODY_LEN_LEN + body.length();
     }
 
     /**
@@ -52,27 +57,29 @@ public class TunnelDataTransport implements Message {
      * @author shuaicj 2017/10/12
      */
     @Component
+    @Scope("prototype")
     public static class Decoder implements MessageDecoder<TunnelDataTransport> {
 
         @Autowired DataTransport.Decoder bodyDecoder;
+        @Autowired TunnelCipher cipher;
 
         @Override
         public TunnelDataTransport decode(ByteBuf in) throws DecoderException {
-            if (!in.isReadable(BODY_LEN_LEN)) {
-                return null;
-            }
-            int mark = in.readerIndex();
-
-            int bodyLength = in.readUnsignedShort();
-            if (!in.isReadable(bodyLength)) {
-                in.readerIndex(mark);
-                return null;
+            try {
+                in = cipher.decrypt(in);
+            } catch (GeneralSecurityException e) {
+                throw new DecoderException(e);
             }
 
-            DataTransport body = bodyDecoder.decode(in.readBytes(bodyLength));
+            if (in == null) {
+                return null;
+            }
+
+            in.readBytes(SALT_LEN + BODY_LEN_LEN); // salt and bodyLength are useless here
+
+            DataTransport body = bodyDecoder.decode(in);
             if (body == null) {
-                in.readerIndex(mark);
-                return null;
+                throw new DecoderException("invalid message after decryption" + in);
             }
 
             return TunnelDataTransport.builder()
@@ -87,21 +94,34 @@ public class TunnelDataTransport implements Message {
      * @author shuaicj 2017/10/12
      */
     @Component
+    @Scope("prototype")
     public static class Encoder implements MessageEncoder<TunnelDataTransport> {
 
         @Autowired DataTransport.Encoder bodyEncoder;
+        @Autowired TunnelCipher cipher;
 
         @Override
         public void encode(TunnelDataTransport msg, ByteBuf out) throws EncoderException {
             while (msg.body.length() > BODY_LEN_MAX) {
-                out.writeShort(BODY_LEN_MAX);
-                bodyEncoder.encode(
+                realEncode(TunnelDataTransport.builder().body(
                         DataTransport.builder()
                                 .data(msg.body.data().readBytes(BODY_LEN_MAX))
-                                .build(), out);
+                                .build()).build(), out);
             }
-            out.writeShort(msg.body.length());
-            bodyEncoder.encode(msg.body, out);
+            realEncode(msg, out);
+        }
+
+        private void realEncode(TunnelDataTransport msg, ByteBuf out) throws EncoderException {
+            ByteBuf buf = out.alloc().buffer(msg.length());
+            buf.writeShort((int) (Math.random() * (SALT_MAX + 1)));
+            buf.writeShort(msg.body.length());
+            bodyEncoder.encode(msg.body, buf);
+            try {
+                buf = cipher.encrypt(buf);
+            } catch (GeneralSecurityException e) {
+                throw new EncoderException(e);
+            }
+            out.writeBytes(buf);
         }
     }
 }
