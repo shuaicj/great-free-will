@@ -20,26 +20,21 @@ spring.profiles.include:
 client.daemon.port: 8080
 server.daemon.port: 9090
 server.daemon.host: 127.0.0.1
-daemon.secret: keepifsecret
-
----
-
-spring.profiles: prod
-
-logging.file: great-free-will.log
-logging.level.io.netty.handler.logging.LoggingHandler: INFO
+daemon.secret: keepitsecret
 
 ---
 
 spring.profiles: clientd
 spring.profiles.include:
   - client
-  - prod
+logging.file: great-free-will-clientd.log
+logging.level.io.netty.handler.logging.LoggingHandler: INFO
 
 ---
 
 spring.profiles: serverd
 spring.profiles.include:
   - server
-  - prod
+logging.file: great-free-will-serverd.log
+logging.level.io.netty.handler.logging.LoggingHandler: INFO
 
